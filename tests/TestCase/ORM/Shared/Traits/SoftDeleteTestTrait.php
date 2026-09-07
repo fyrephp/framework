@@ -682,7 +682,7 @@ trait SoftDeleteTestTrait
                 $commits[] = 'restore';
             });
         });
-        $Users->getEventManager()->on('ORM.afterSave', static function() use ($exception): void {
+        $Users->getEventManager()->on('ORM.afterSave', static function() use ($exception): never {
             throw $exception;
         });
 

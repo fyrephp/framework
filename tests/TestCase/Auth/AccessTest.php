@@ -433,7 +433,7 @@ final class AccessTest extends TestCase
 
             return false;
         });
-        $this->access->before(static function(User|null $authUser, string $rule): void {
+        $this->access->before(static function(User|null $authUser, string $rule): never {
             throw new Exception();
         });
 
@@ -459,7 +459,7 @@ final class AccessTest extends TestCase
 
             return true;
         });
-        $this->access->before(static function(User|null $authUser, string $rule): void {
+        $this->access->before(static function(User|null $authUser, string $rule): never {
             throw new Exception();
         });
 

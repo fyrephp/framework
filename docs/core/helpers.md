@@ -68,7 +68,7 @@ Most helpers delegate to the same shared services available through the containe
 | `json(mixed $data, bool $stream = false): ClientResponse` | JSON response; streaming emits an iterable as a JSON array |
 | `route(string $name, array $arguments = [], string\|null $scheme = null, string\|null $host = null, int\|null $port = null, bool\|null $full = null): string` | URL generated from a route alias, placeholders, and optional origin overrides |
 | `redirect(string\|Uri $uri, int $code = 302, array $options = []): RedirectResponse` | redirect response for a URI |
-| `abort(int $code = 500, string\|null $message = null): void` | throws the HTTP exception mapped to the status code |
+| `abort(int $code = 500, string\|null $message = null): never` | throws the HTTP exception mapped to the status code |
 | `session(string\|null $key = null, mixed $value = null): mixed` | current `Session`, a stored value, or the result of writing a value |
 | `asset(string $path, bool $full = false): string` | normalized asset URL, optionally resolved against `App.baseUri` |
 
@@ -129,7 +129,7 @@ session('wizard.step', 2);
 | `collect(array\|Closure\|JsonSerializable\|Traversable\|null $source): Collection` | new collection containing the source values |
 | `now(): DateTime` | new date/time value for the current instant |
 | `dump(mixed ...$data): void` | dump values with `var_dump()` |
-| `dd(mixed ...$data): void` | dump values and stop execution |
+| `dd(mixed ...$data): never` | dump values and stop execution |
 | `log_message(string $type, string $message, array $data = []): void` | write through the shared log manager |
 
 ## Behavior notes

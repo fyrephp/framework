@@ -384,7 +384,7 @@ trait TransactionTestTrait
         $this->db->afterRollback(static function() use (&$called): void {
             $called = true;
         });
-        $this->db->afterRollback(static function(): void {
+        $this->db->afterRollback(static function(): never {
             throw new Exception('Rollback callback failed.');
         });
 

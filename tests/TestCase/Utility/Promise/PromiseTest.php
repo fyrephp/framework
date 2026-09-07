@@ -46,7 +46,7 @@ final class PromiseTest extends TestCase
     public function testCatchCatchException(): void
     {
         Promise::reject()
-            ->catch(static function(): void {
+            ->catch(static function(): never {
                 throw new Exception('test');
             })
             ->catch(function(Throwable $reason): void {
@@ -59,7 +59,7 @@ final class PromiseTest extends TestCase
 
     public function testCatchException(): void
     {
-        new Promise(static function(Closure $resolve, Closure $reject): void {
+        new Promise(static function(Closure $resolve, Closure $reject): never {
             throw new Exception('test');
         })->catch(function(Throwable $reason): void {
             $this->assertSame(
@@ -96,7 +96,7 @@ final class PromiseTest extends TestCase
 
     public function testCatchThen(): void
     {
-        new Promise(static function(Closure $resolve, Closure $reject): void {
+        new Promise(static function(Closure $resolve, Closure $reject): never {
             throw new Exception();
         })->catch(static function(): int {
             return 1;
@@ -110,9 +110,9 @@ final class PromiseTest extends TestCase
 
     public function testCatchThenCatch(): void
     {
-        new Promise(static function(Closure $resolve, Closure $reject): void {
+        new Promise(static function(Closure $resolve, Closure $reject): never {
             throw new Exception();
-        })->catch(static function(): void {})->then(static function(): void {
+        })->catch(static function(): void {})->then(static function(): never {
             throw new Exception('test');
         })->catch(function(Throwable $reason): void {
             $this->assertSame(
@@ -124,7 +124,7 @@ final class PromiseTest extends TestCase
 
     public function testCatchThenPromise(): void
     {
-        new Promise(static function(Closure $resolve, Closure $reject): void {
+        new Promise(static function(Closure $resolve, Closure $reject): never {
             throw new Exception();
         })->catch(static function(): PromiseInterface {
             return Promise::resolve(1);
@@ -380,7 +380,7 @@ final class PromiseTest extends TestCase
     public function testThenThenCatch(): void
     {
         Promise::resolve()
-            ->then(static function(): void {
+            ->then(static function(): never {
                 throw new Exception('test');
             })
             ->then(function(): void {
@@ -423,7 +423,7 @@ final class PromiseTest extends TestCase
     {
         $this->expectException(Exception::class);
 
-        Promise::reject()->catch(static function(): void {
+        Promise::reject()->catch(static function(): never {
             throw new Exception();
         });
     }
@@ -442,7 +442,7 @@ final class PromiseTest extends TestCase
     {
         $this->expectException(Exception::class);
 
-        Promise::resolve(1)->then(static function(): void {
+        Promise::resolve(1)->then(static function(): never {
             throw new Exception();
         });
     }

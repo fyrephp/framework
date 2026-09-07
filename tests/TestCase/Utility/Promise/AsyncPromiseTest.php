@@ -78,7 +78,7 @@ final class AsyncPromiseTest extends TestCase
                 ],
             ],
             'throw' => [
-                'callback' => static function(): void {
+                'callback' => static function(): never {
                     throw new Exception('test');
                 },
                 'expected' => [
@@ -620,7 +620,7 @@ final class AsyncPromiseTest extends TestCase
 
     public function testCatchReason(): void
     {
-        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
+        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): never {
             throw new Exception('test');
         });
 
@@ -636,7 +636,7 @@ final class AsyncPromiseTest extends TestCase
 
     public function testCatchThen(): void
     {
-        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
+        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): never {
             throw new Exception();
         });
 
@@ -654,11 +654,11 @@ final class AsyncPromiseTest extends TestCase
 
     public function testCatchThenCatch(): void
     {
-        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
+        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): never {
             throw new Exception();
         });
 
-        $promise->catch(static function(): void {})->then(static function(): void {
+        $promise->catch(static function(): void {})->then(static function(): never {
             throw new Exception('test');
         })->catch(function(Throwable $reason): void {
             $this->assertSame(
@@ -672,7 +672,7 @@ final class AsyncPromiseTest extends TestCase
 
     public function testCatchThenPromise(): void
     {
-        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
+        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): never {
             throw new Exception();
         });
 

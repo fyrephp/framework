@@ -69,7 +69,7 @@ if (!function_exists('abort')) {
      *
      * @throws HttpException If the HTTP error is raised.
      */
-    function abort(int $code = 500, string|null $message = null): void
+    function abort(int $code = 500, string|null $message = null): never
     {
         throw match ($code) {
             400 => new BadRequestException($message),
@@ -285,7 +285,7 @@ if (!function_exists('dd')) {
      *
      * @param mixed ...$data The data to dump.
      */
-    function dd(mixed ...$data): void
+    function dd(mixed ...$data): never
     {
         dump(...$data);
         exit();

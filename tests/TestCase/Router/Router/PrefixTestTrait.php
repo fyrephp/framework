@@ -30,7 +30,7 @@ trait PrefixTestTrait
 
         try {
             $router->group(
-                static fn() => throw new RuntimeException('Test exception.'),
+                static fn(): never => throw new RuntimeException('Test exception.'),
                 prefix: 'prefix'
             );
         } catch (RuntimeException $e) {

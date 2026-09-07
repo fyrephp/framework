@@ -175,7 +175,7 @@ class Promise implements PromiseInterface
             static function(mixed $value) use (&$result): void {
                 $result = $value;
             },
-            static function(Throwable $e): void {
+            static function(Throwable $e): never {
                 throw $e;
             }
         );
