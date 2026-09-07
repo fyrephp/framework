@@ -20,6 +20,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 
+use function base64_encode;
 use function class_uses;
 
 final class CsrfProtectionMiddlewareTest extends TestCase
@@ -52,6 +53,28 @@ final class CsrfProtectionMiddlewareTest extends TestCase
                     ],
                     'data' => [
                         'csrf_token' => $csrfProtection->getFormToken(),
+                    ],
+                ],
+            ],
+            'short decoded cookie with header token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'headers' => [
+                        'Csrf-Token' => $csrfProtection->getFormToken(),
+                    ],
+                    'cookies' => [
+                        'CsrfToken' => base64_encode('short'),
+                    ],
+                ],
+            ],
+            'cookie without signature with header token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'headers' => [
+                        'Csrf-Token' => $csrfProtection->getFormToken(),
+                    ],
+                    'cookies' => [
+                        'CsrfToken' => base64_encode('0123456789abcdef'),
                     ],
                 ],
             ],
@@ -94,6 +117,28 @@ final class CsrfProtectionMiddlewareTest extends TestCase
     public static function invalidSubmittedTokenProvider(): array
     {
         return [
+            'invalid base64 form token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'cookies' => [
+                        'CsrfToken' => $csrfProtection->getCookieToken(),
+                    ],
+                    'data' => [
+                        'csrf_token' => $csrfProtection->getFormToken().'%',
+                    ],
+                ],
+            ],
+            'invalid base64 header token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'headers' => [
+                        'Csrf-Token' => $csrfProtection->getFormToken().'%',
+                    ],
+                    'cookies' => [
+                        'CsrfToken' => $csrfProtection->getCookieToken(),
+                    ],
+                ],
+            ],
             'array form token' => [
                 static fn(CsrfProtection $csrfProtection): array => [
                     'method' => 'POST',
