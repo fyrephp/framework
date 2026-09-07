@@ -46,6 +46,7 @@
             <exclude>tests/TestCase/Http/Session/MysqlTest.php</exclude>
             <exclude>tests/TestCase/Http/Session/PostgresTest.php</exclude>
             <exclude>tests/TestCase/Http/Session/RedisTest.php</exclude>
+            <exclude>tests/TestCase/Http/Session/SessionHttpTest.php</exclude>
             <exclude>tests/TestCase/Http/Session/SqliteTest.php</exclude>
             <exclude>tests/TestCase/Mail/SmtpTest.php</exclude>
             <exclude>tests/TestCase/ORM/MariaDb</exclude>
@@ -137,6 +138,7 @@
         </testsuite>
         <testsuite name="external">
             <file>tests/TestCase/Http/Client/CurlHandlerTest.php</file>
+            <file>tests/TestCase/Http/Session/SessionHttpTest.php</file>
             <file>tests/TestCase/Utility/PdfTest.php</file>
         </testsuite>
     </testsuites>

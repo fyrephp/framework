@@ -13,7 +13,6 @@ parameters:
         - Mock
         - TestCase
         - bootstrap.php
-        - server.php
 
 services:
     -

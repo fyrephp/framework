@@ -12,37 +12,15 @@ use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Http\TestServer;
 
-use function fclose;
 use function fopen;
 use function http_build_query;
-use function is_resource;
-use function proc_close;
-use function proc_get_status;
-use function proc_open;
-use function proc_terminate;
-use function rewind;
-use function stream_get_contents;
-use function stream_socket_client;
-use function stream_socket_get_name;
-use function stream_socket_server;
-use function tmpfile;
-use function usleep;
-
-use const PHP_BINARY;
 
 #[RequiresPhpExtension('curl')]
 final class CurlHandlerTest extends TestCase
 {
-    /**
-     * @var resource|null
-     */
-    protected static $output;
-
-    /**
-     * @var resource|null
-     */
-    protected static $process;
+    protected static TestServer|null $server = null;
 
     protected static string $url;
 
@@ -277,77 +255,14 @@ final class CurlHandlerTest extends TestCase
     #[Override]
     public static function setUpBeforeClass(): void
     {
-        $socket = stream_socket_server('tcp://127.0.0.1:0');
-
-        self::assertIsResource($socket);
-
-        $address = stream_socket_get_name($socket, false);
-        fclose($socket);
-
-        self::assertIsString($address);
-
-        self::$url = 'http://'.$address;
-        $output = tmpfile();
-
-        self::assertIsResource($output);
-
-        self::$output = $output;
-        $process = proc_open(
-            [PHP_BINARY, '-S', $address, 'tests/server.php'],
-            [
-                0 => ['pipe', 'r'],
-                1 => $output,
-                2 => $output,
-            ],
-            $pipes
-        );
-
-        if (!is_resource($process)) {
-            self::tearDownAfterClass();
-            self::fail('cURL test server could not be started.');
-        }
-
-        self::$process = $process;
-        fclose($pipes[0]);
-
-        for ($i = 0; $i < 500; $i++) {
-            $socket = @stream_socket_client('tcp://'.$address, timeout: 0.1);
-            $running = proc_get_status($process)['running'];
-
-            if ($socket) {
-                fclose($socket);
-
-                if ($running) {
-                    return;
-                }
-            }
-
-            if (!$running) {
-                break;
-            }
-
-            usleep(10_000);
-        }
-
-        rewind($output);
-        $message = stream_get_contents($output);
-        self::tearDownAfterClass();
-
-        self::fail('cURL test server did not become ready: '.$message);
+        self::$server = new TestServer('tests/Mock/Http/Client/server.php');
+        self::$url = self::$server->getUrl();
     }
 
     #[Override]
     public static function tearDownAfterClass(): void
     {
-        if (is_resource(self::$process)) {
-            proc_terminate(self::$process);
-            proc_close(self::$process);
-            self::$process = null;
-        }
-
-        if (is_resource(self::$output)) {
-            fclose(self::$output);
-            self::$output = null;
-        }
+        self::$server?->stop();
+        self::$server = null;
     }
 }
