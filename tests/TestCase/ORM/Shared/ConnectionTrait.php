@@ -17,6 +17,8 @@ trait ConnectionTrait
     use DatabaseLifecycleTrait;
 
     protected const TABLES = [
+        'cascade_children',
+        'cascade_parents',
         'contains',
         'composite_items',
         'items',
@@ -59,6 +61,13 @@ trait ConnectionTrait
         $this->db = $this->container->use(ConnectionManager::class)->use();
 
         foreach (static::TABLES as $table) {
+            // Referenced tables cannot be truncated on all handlers.
+            if ($table === 'cascade_children' || $table === 'cascade_parents') {
+                $this->db->delete()->from($table)->execute();
+
+                continue;
+            }
+
             $this->db->truncate($table);
         }
     }

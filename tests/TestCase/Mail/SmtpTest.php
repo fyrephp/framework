@@ -10,17 +10,22 @@ use Fyre\Mail\Mailer;
 use Fyre\Mail\MailManager;
 use Override;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 use function file_get_contents;
 use function getenv;
 
 final class SmtpTest extends TestCase
 {
-    protected static Mailer $mailer;
+    protected Mailer $mailer;
+
+    protected string $mailFrom;
+
+    protected string $mailTo;
 
     public function testDebug(): void
     {
-        $data = self::$mailer->__debugInfo();
+        $data = $this->mailer->__debugInfo();
 
         $this->assertArraysAreIdentical(
             [
@@ -49,16 +54,9 @@ final class SmtpTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $mailTo = getenv('MAIL_TO');
-        $mailFrom = getenv('MAIL_FROM');
-
-        if (!$mailTo || !$mailFrom) {
-            return;
-        }
-
-        self::$mailer->email()
-            ->setTo($mailTo)
-            ->setFrom($mailFrom)
+        $this->mailer->email()
+            ->setTo($this->mailTo)
+            ->setFrom($this->mailFrom)
             ->setSubject('Test')
             ->setBodyText('This is a test')
             ->send();
@@ -68,16 +66,9 @@ final class SmtpTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $mailTo = getenv('MAIL_TO');
-        $mailFrom = getenv('MAIL_FROM');
-
-        if (!$mailTo || !$mailFrom) {
-            return;
-        }
-
-        self::$mailer->email()
-            ->setTo($mailTo)
-            ->setFrom($mailFrom)
+        $this->mailer->email()
+            ->setTo($this->mailTo)
+            ->setFrom($this->mailFrom)
             ->setSubject('Test')
             ->addAttachments([
                 'test.jpg' => [
@@ -92,16 +83,9 @@ final class SmtpTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $mailTo = getenv('MAIL_TO');
-        $mailFrom = getenv('MAIL_FROM');
-
-        if (!$mailTo || !$mailFrom) {
-            return;
-        }
-
-        self::$mailer->email()
-            ->setTo($mailTo)
-            ->setFrom($mailFrom)
+        $this->mailer->email()
+            ->setTo($this->mailTo)
+            ->setFrom($this->mailFrom)
             ->setSubject('Test')
             ->addAttachments([
                 'test.jpg' => [
@@ -116,16 +100,9 @@ final class SmtpTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $mailTo = getenv('MAIL_TO');
-        $mailFrom = getenv('MAIL_FROM');
-
-        if (!$mailTo || !$mailFrom) {
-            return;
-        }
-
-        self::$mailer->email()
-            ->setTo($mailTo)
-            ->setFrom($mailFrom)
+        $this->mailer->email()
+            ->setTo($this->mailTo)
+            ->setFrom($this->mailFrom)
             ->setSubject('Test')
             ->addAttachments([
                 'test.jpg' => [
@@ -142,26 +119,52 @@ final class SmtpTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $mailTo = getenv('MAIL_TO');
-        $mailFrom = getenv('MAIL_FROM');
-
-        if (!$mailTo || !$mailFrom) {
-            return;
-        }
-
-        self::$mailer->email()
-            ->setTo($mailTo)
-            ->setFrom($mailFrom)
+        $this->mailer->email()
+            ->setTo($this->mailTo)
+            ->setFrom($this->mailFrom)
             ->setSubject('Test')
             ->setFormat(Email::HTML)
             ->setBodyHtml('<b>This is a test</b>')
             ->send();
     }
 
-    #[Override]
-    public static function setUpBeforeClass(): void
+    public function testMailSendKeepAlive(): void
     {
-        self::$mailer = new Container()
+        $email = $this->mailer->email()
+            ->setTo($this->mailTo)
+            ->setFrom($this->mailFrom)
+            ->setSubject('Test')
+            ->setBodyText('This is a test');
+
+        $email->send();
+
+        $property = new ReflectionProperty(SmtpMailer::class, 'socket');
+        $socket = $property->getValue($this->mailer);
+
+        $this->assertIsResource($socket);
+
+        $email->send();
+
+        $this->assertSame(
+            $socket,
+            $property->getValue($this->mailer)
+        );
+    }
+
+    #[Override]
+    protected function setUp(): void
+    {
+        $mailTo = getenv('MAIL_TO');
+        $mailFrom = getenv('MAIL_FROM');
+
+        if (!$mailTo || !$mailFrom) {
+            $this->markTestSkipped('MAIL_TO and MAIL_FROM are required for SMTP tests.');
+        }
+
+        $this->mailTo = $mailTo;
+        $this->mailFrom = $mailFrom;
+
+        $this->mailer = new Container()
             ->use(MailManager::class)
             ->build([
                 'className' => SmtpMailer::class,
@@ -173,5 +176,11 @@ final class SmtpTest extends TestCase
                 'tls' => getenv('SMTP_TLS'),
                 'keepAlive' => true,
             ]);
+    }
+
+    #[Override]
+    protected function tearDown(): void
+    {
+        unset($this->mailer);
     }
 }

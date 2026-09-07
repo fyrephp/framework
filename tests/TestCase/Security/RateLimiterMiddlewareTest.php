@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace Tests\TestCase\Security;
 
 use Fyre\Cache\CacheManager;
+use Fyre\Cache\Handlers\Array\ArrayCacher;
 use Fyre\Cache\Handlers\File\FileCacher;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
+use Fyre\Http\ClientResponse;
 use Fyre\Http\Exceptions\TooManyRequestsException;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\MiddlewareRegistry;
@@ -15,29 +17,25 @@ use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;
 use Fyre\Router\Routes\ControllerRoute;
 use Fyre\Security\Middleware\RateLimiterMiddleware;
-use Fyre\Security\RateLimiter;
-use Fyre\Security\RateLimiter\FixedWindowRateLimiter;
-use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Tests\Mock\Controllers\TestController;
 
 use function class_uses;
-use function glob;
 use function mkdir;
 use function rmdir;
-use function sleep;
 use function time;
-use function unlink;
-use function usleep;
 
 final class RateLimiterMiddlewareTest extends TestCase
 {
     protected CacheManager $cacheManager;
 
     protected Container $container;
+
+    protected RequestHandlerInterface $handler;
 
     /**
      * @return array<string, array{string, int, string}>
@@ -190,10 +188,6 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'server' => [
@@ -202,7 +196,7 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $handler->handle($request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertSame(
             '5',
@@ -214,52 +208,60 @@ final class RateLimiterMiddlewareTest extends TestCase
     {
         $this->assertContains(
             DebugTrait::class,
-            class_uses(RateLimiter::class)
-        );
-
-        $this->assertContains(
-            DebugTrait::class,
             class_uses(RateLimiterMiddleware::class)
         );
     }
 
     public function testError(): void
     {
-        for ($i = 1; $i <= 6; $i++) {
-            $middleware = $this->container->build(RateLimiterMiddleware::class, [
-                'options' => [
-                    'limit' => 5,
-                    'window' => 60,
-                ],
-            ]);
+        $this->cacheManager->unload('ratelimiter')->setConfig('ratelimiter', [
+            'className' => FileCacher::class,
+            'path' => 'cache',
+            'prefix' => 'ratelimiter_',
+        ]);
 
-            $queue = new MiddlewareQueue();
-            $queue->add($middleware);
+        @mkdir('cache');
 
-            $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
-            $request = $this->container->build(ServerRequest::class, [
-                'options' => [
-                    'server' => [
-                        'REMOTE_ADDR' => '127.0.0.1',
+        try {
+            for ($i = 1; $i <= 6; $i++) {
+                $middleware = $this->container->build(RateLimiterMiddleware::class, [
+                    'options' => [
+                        'limit' => 5,
+                        'window' => 60,
                     ],
-                ],
-            ]);
+                ]);
 
-            try {
-                $response = $handler->handle($request);
-            } catch (TooManyRequestsException) {
-                $this->assertSame(6, $i);
+                $queue = new MiddlewareQueue();
+                $queue->add($middleware);
 
-                return;
+                $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+                $request = $this->container->build(ServerRequest::class, [
+                    'options' => [
+                        'server' => [
+                            'REMOTE_ADDR' => '127.0.0.1',
+                        ],
+                    ],
+                ]);
+
+                try {
+                    $response = $handler->handle($request);
+                } catch (TooManyRequestsException) {
+                    $this->assertSame(6, $i);
+
+                    return;
+                }
+
+                $this->assertSame(
+                    204,
+                    $response->getStatusCode()
+                );
             }
 
-            $this->assertSame(
-                204,
-                $response->getStatusCode()
-            );
+            $this->fail('The sixth request was not rejected.');
+        } finally {
+            $this->cacheManager->use('ratelimiter')->clear();
+            @rmdir('cache');
         }
-
-        $this->fail('The sixth request was not rejected.');
     }
 
     public function testErrorMessage(): void
@@ -275,13 +277,9 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
         $request = $this->container->build(ServerRequest::class);
 
-        $handler->handle($request);
+        $middleware->process($request, $this->handler);
     }
 
     public function testErrorRetryAfter(): void
@@ -294,14 +292,10 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
         $request = $this->container->build(ServerRequest::class);
 
         try {
-            $handler->handle($request);
+            $middleware->process($request, $this->handler);
         } catch (TooManyRequestsException $e) {
             $retryAfter = (int) ($e->getHeaders()['Retry-After'] ?? 0);
 
@@ -321,65 +315,6 @@ final class RateLimiterMiddlewareTest extends TestCase
         $this->fail('A request exceeding the limit was not rejected.');
     }
 
-    public function testFixedWindowLimitAcrossSeconds(): void
-    {
-        $limiter = $this->container->build(FixedWindowRateLimiter::class, [
-            'options' => [
-                'limit' => 1,
-                'window' => 60,
-            ],
-        ]);
-        $request = $this->container->build(ServerRequest::class);
-
-        $first = $limiter->checkLimit($request);
-
-        $this->assertTrue($first['allowed']);
-
-        sleep(1);
-
-        $second = $limiter->checkLimit($request);
-
-        // If the first request landed in the final second, check the new window instead.
-        if ($second['reset'] !== $first['reset']) {
-            $first = $second;
-
-            $this->assertTrue($first['allowed']);
-
-            sleep(1);
-
-            $second = $limiter->checkLimit($request);
-        }
-
-        $this->assertFalse($second['allowed']);
-        $this->assertSame(0, $second['remaining']);
-        $this->assertSame($first['reset'], $second['reset']);
-        $this->assertSame(0, $second['reset'] % 60);
-    }
-
-    public function testFixedWindowLimitResets(): void
-    {
-        $limiter = $this->container->build(FixedWindowRateLimiter::class, [
-            'options' => [
-                'limit' => 1,
-                'window' => 1,
-            ],
-        ]);
-        $request = $this->container->build(ServerRequest::class);
-
-        $first = $limiter->checkLimit($request);
-
-        $this->assertTrue($first['allowed']);
-        $this->assertSame(0, $first['remaining']);
-
-        sleep(1);
-
-        $second = $limiter->checkLimit($request);
-
-        $this->assertTrue($second['allowed']);
-        $this->assertSame(0, $second['remaining']);
-        $this->assertGreaterThan($first['reset'], $second['reset']);
-    }
-
     public function testIdentifier(): void
     {
         for ($i = 0; $i <= 10; $i++) {
@@ -391,10 +326,6 @@ final class RateLimiterMiddlewareTest extends TestCase
                 ],
             ]);
 
-            $queue = new MiddlewareQueue();
-            $queue->add($middleware);
-
-            $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
             $request = $this->container->build(ServerRequest::class, [
                 'options' => [
                     'server' => [
@@ -403,56 +334,13 @@ final class RateLimiterMiddlewareTest extends TestCase
                 ],
             ]);
 
-            $response = $handler->handle($request);
-
-            usleep(100);
+            $response = $middleware->process($request, $this->handler);
         }
 
         $this->assertSame(
             204,
             $response->getStatusCode()
         );
-    }
-
-    public function testInvalidCost(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Rate limiter cost must not be negative.');
-
-        $limiter = $this->container->build(FixedWindowRateLimiter::class, [
-            'options' => [
-                'cost' => static fn(): int => -1,
-            ],
-        ]);
-        $request = $this->container->build(ServerRequest::class);
-
-        $limiter->checkLimit($request);
-    }
-
-    public function testInvalidLimit(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Rate limiter limit must be greater than 0.');
-
-        $limiter = $this->container->build(FixedWindowRateLimiter::class, [
-            'options' => [
-                'limit' => 0,
-            ],
-        ]);
-        $request = $this->container->build(ServerRequest::class);
-
-        $limiter->checkLimit($request);
-    }
-
-    public function testInvalidWindow(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Rate limiter window must be greater than 0.');
-
-        $limiter = $this->container->build(FixedWindowRateLimiter::class);
-        $request = $this->container->build(ServerRequest::class);
-
-        $limiter->checkLimit($request, window: 0);
     }
 
     public function testIpIdentifierIgnoresForwardedHeaderByDefault(): void
@@ -490,19 +378,12 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue1 = new MiddlewareQueue();
-        $queue1->add($middleware);
-        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
-
         $this->assertSame(
             204,
-            $handler1->handle($request1)->getStatusCode()
+            $middleware->process($request1, $this->handler)->getStatusCode()
         );
 
-        $queue2 = new MiddlewareQueue();
-        $queue2->add($middleware);
-        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
-        $handler2->handle($request2);
+        $middleware->process($request2, $this->handler);
     }
 
     public function testIpIdentifierIgnoresForwardedHeaderForUntrustedProxy(): void
@@ -544,19 +425,12 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue1 = new MiddlewareQueue();
-        $queue1->add($middleware);
-        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
-
         $this->assertSame(
             204,
-            $handler1->handle($request1)->getStatusCode()
+            $middleware->process($request1, $this->handler)->getStatusCode()
         );
 
-        $queue2 = new MiddlewareQueue();
-        $queue2->add($middleware);
-        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
-        $handler2->handle($request2);
+        $middleware->process($request2, $this->handler);
     }
 
     public function testIpIdentifierStopsAtFirstUntrustedProxy(): void
@@ -595,22 +469,14 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue1 = new MiddlewareQueue();
-        $queue1->add($middleware);
-        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
-
-        $queue2 = new MiddlewareQueue();
-        $queue2->add($middleware);
-        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
-
         $this->assertSame(
             204,
-            $handler1->handle($request1)->getStatusCode()
+            $middleware->process($request1, $this->handler)->getStatusCode()
         );
 
         $this->assertSame(
             204,
-            $handler2->handle($request2)->getStatusCode()
+            $middleware->process($request2, $this->handler)->getStatusCode()
         );
     }
 
@@ -650,22 +516,14 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue1 = new MiddlewareQueue();
-        $queue1->add($middleware);
-        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
-
-        $queue2 = new MiddlewareQueue();
-        $queue2->add($middleware);
-        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
-
         $this->assertSame(
             204,
-            $handler1->handle($request1)->getStatusCode()
+            $middleware->process($request1, $this->handler)->getStatusCode()
         );
 
         $this->assertSame(
             204,
-            $handler2->handle($request2)->getStatusCode()
+            $middleware->process($request2, $this->handler)->getStatusCode()
         );
     }
 
@@ -703,22 +561,14 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue1 = new MiddlewareQueue();
-        $queue1->add($middleware);
-        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
-
-        $queue2 = new MiddlewareQueue();
-        $queue2->add($middleware);
-        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
-
         $this->assertSame(
             204,
-            $handler1->handle($request1)->getStatusCode()
+            $middleware->process($request1, $this->handler)->getStatusCode()
         );
 
         $this->assertSame(
             204,
-            $handler2->handle($request2)->getStatusCode()
+            $middleware->process($request2, $this->handler)->getStatusCode()
         );
     }
 
@@ -733,10 +583,6 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'server' => [
@@ -745,7 +591,7 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $handler->handle($request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertSame(
             '10',
@@ -764,10 +610,6 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'server' => [
@@ -776,7 +618,7 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $handler->handle($request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertSame(
             '9',
@@ -826,10 +668,6 @@ final class RateLimiterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'server' => [
@@ -839,7 +677,7 @@ final class RateLimiterMiddlewareTest extends TestCase
         ]);
 
         $before = time();
-        $response = $handler->handle($request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertGreaterThan(
             $before,
@@ -858,10 +696,6 @@ final class RateLimiterMiddlewareTest extends TestCase
                 ],
             ]);
 
-            $queue = new MiddlewareQueue();
-            $queue->add($middleware);
-
-            $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
             $request = $this->container->build(ServerRequest::class, [
                 'options' => [
                     'server' => [
@@ -876,9 +710,7 @@ final class RateLimiterMiddlewareTest extends TestCase
             ]);
             $request = $request->withAttribute('route', $route);
 
-            $response = $handler->handle($request);
-
-            usleep(100);
+            $response = $middleware->process($request, $this->handler);
         }
 
         $this->assertSame(
@@ -898,10 +730,6 @@ final class RateLimiterMiddlewareTest extends TestCase
                 ],
             ]);
 
-            $queue = new MiddlewareQueue();
-            $queue->add($middleware);
-
-            $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
             $request = $this->container->build(ServerRequest::class, [
                 'options' => [
                     'server' => [
@@ -910,9 +738,7 @@ final class RateLimiterMiddlewareTest extends TestCase
                 ],
             ]);
 
-            $response = $handler->handle($request);
-
-            usleep(100);
+            $response = $middleware->process($request, $this->handler);
         }
 
         $this->assertSame(
@@ -932,10 +758,6 @@ final class RateLimiterMiddlewareTest extends TestCase
                 ],
             ]);
 
-            $queue = new MiddlewareQueue();
-            $queue->add($middleware);
-
-            $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
             $request = $this->container->build(ServerRequest::class, [
                 'options' => [
                     'server' => [
@@ -947,9 +769,7 @@ final class RateLimiterMiddlewareTest extends TestCase
             $user = (object) ['id' => $i];
             $request = $request->withAttribute('user', $user);
 
-            $response = $handler->handle($request);
-
-            usleep(100);
+            $response = $middleware->process($request, $this->handler);
         }
 
         $this->assertSame(
@@ -968,23 +788,10 @@ final class RateLimiterMiddlewareTest extends TestCase
         $this->cacheManager = $this->container->use(CacheManager::class);
 
         $this->cacheManager->setConfig('ratelimiter', [
-            'className' => FileCacher::class,
-            'path' => 'cache',
-            'prefix' => 'ratelimiter_',
+            'className' => ArrayCacher::class,
         ]);
 
-        @mkdir('cache');
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        $files = glob('cache/ratelimiter_*') ?: [];
-
-        foreach ($files as $file) {
-            @unlink($file);
-        }
-
-        @rmdir('cache');
+        $this->handler = $this->createStub(RequestHandlerInterface::class);
+        $this->handler->method('handle')->willReturn(new ClientResponse(['statusCode' => 204]));
     }
 }

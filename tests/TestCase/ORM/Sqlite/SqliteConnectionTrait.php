@@ -58,6 +58,22 @@ trait SqliteConnectionTrait
     protected static function createSchema(Connection $db): void
     {
         $db->query(<<<'SQL'
+            CREATE TABLE cascade_parents (
+                id INTEGER NOT NULL,
+                PRIMARY KEY (id)
+            )
+        SQL);
+
+        $db->query(<<<'SQL'
+            CREATE TABLE cascade_children (
+                id INTEGER NOT NULL,
+                cascade_parent_id INTEGER NULL,
+                PRIMARY KEY (id),
+                FOREIGN KEY (cascade_parent_id) REFERENCES cascade_parents (id) ON DELETE RESTRICT
+            )
+        SQL);
+
+        $db->query(<<<'SQL'
             CREATE TABLE items (
                 id INTEGER NOT NULL,
                 name VARCHAR(255) NULL DEFAULT NULL,

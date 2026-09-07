@@ -56,6 +56,7 @@
             <exclude>tests/TestCase/Queue/ListenerTest.php</exclude>
             <exclude>tests/TestCase/Queue/RedisQueueManagerTest.php</exclude>
             <exclude>tests/TestCase/Queue/RedisQueueTest.php</exclude>
+            <exclude>tests/TestCase/Queue/Sqlite</exclude>
             <exclude>tests/TestCase/Queue/WorkerTest.php</exclude>
             <exclude>tests/TestCase/Router/RouteModelParamsTest.php</exclude>
             <exclude>tests/TestCase/TestSuite/Fixture</exclude>
@@ -112,6 +113,7 @@
             <directory>tests/TestCase/DB/Sqlite</directory>
             <directory>tests/TestCase/DB/Schema/Sqlite</directory>
             <directory>tests/TestCase/ORM/Sqlite</directory>
+            <directory>tests/TestCase/Queue/Sqlite</directory>
             <directory>tests/TestCase/View/Helpers/Form/Context/Sqlite</directory>
             <file>tests/TestCase/Commands/Make/MakeFixtureTest.php</file>
             <file>tests/TestCase/Commands/Make/MakeModelTest.php</file>

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Tests\TestCase\Http\Curl;
+namespace Tests\TestCase\Http\Client;
 
 use Fyre\Http\Client;
 use Fyre\Http\Client\Exceptions\NetworkException;
@@ -13,17 +13,38 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 
-use function exec;
 use function fclose;
 use function fopen;
-use function fsockopen;
 use function http_build_query;
+use function is_resource;
+use function proc_close;
+use function proc_get_status;
+use function proc_open;
+use function proc_terminate;
+use function rewind;
+use function stream_get_contents;
+use function stream_socket_client;
+use function stream_socket_get_name;
+use function stream_socket_server;
+use function tmpfile;
 use function usleep;
+
+use const PHP_BINARY;
 
 #[RequiresPhpExtension('curl')]
 final class CurlHandlerTest extends TestCase
 {
-    protected static int $pid;
+    /**
+     * @var resource|null
+     */
+    protected static $output;
+
+    /**
+     * @var resource|null
+     */
+    protected static $process;
+
+    protected static string $url;
 
     /**
      * @return array<string, array{string, int, string, string, string, string}>
@@ -46,7 +67,7 @@ final class CurlHandlerTest extends TestCase
                 'username' => 'test',
                 'password' => 'password',
             ],
-        ])->get('http://localhost:8888/auth');
+        ])->get(self::$url.'/auth');
 
         $this->assertTrue(
             $response->isOk()
@@ -65,7 +86,7 @@ final class CurlHandlerTest extends TestCase
                 'username' => 'test',
                 'password' => 'password',
             ],
-        ])->get('http://localhost:8888/auth-digest');
+        ])->get(self::$url.'/auth-digest');
 
         $this->assertTrue(
             $response->isOk()
@@ -78,7 +99,7 @@ final class CurlHandlerTest extends TestCase
 
     public function testGetData(): void
     {
-        $response = new Client()->get('http://localhost:8888/get', [
+        $response = new Client()->get(self::$url.'/get', [
             'value' => 1,
         ]);
 
@@ -107,7 +128,7 @@ final class CurlHandlerTest extends TestCase
             'body' => $body,
         ]);
 
-        $response = new CurlHandler()->send(new Request('http://localhost:8888/gzip?'.$query, [
+        $response = new CurlHandler()->send(new Request(self::$url.'/gzip?'.$query, [
             'method' => $method,
         ]));
 
@@ -134,7 +155,7 @@ final class CurlHandlerTest extends TestCase
 
     public function testProtocolVersion(): void
     {
-        $response = new Client()->get('http://localhost:8888/version', options: [
+        $response = new Client()->get(self::$url.'/version', options: [
             'protocolVersion' => '1.0',
         ]);
 
@@ -159,7 +180,7 @@ final class CurlHandlerTest extends TestCase
                 'username' => 'test',
                 'password' => 'password',
             ],
-        ])->get('http://localhost:8888/proxy');
+        ])->get(self::$url.'/proxy');
 
         $this->assertTrue(
             $response->isOk()
@@ -190,7 +211,7 @@ final class CurlHandlerTest extends TestCase
 
     public function testUncompressedResponse(): void
     {
-        $response = new Client()->get('http://localhost:8888/plain');
+        $response = new Client()->get(self::$url.'/plain');
 
         $this->assertSame(
             'test',
@@ -211,7 +232,7 @@ final class CurlHandlerTest extends TestCase
     {
         $file = fopen('tests/assets/test.txt', 'r');
 
-        $response = new Client()->post('http://localhost:8888/upload', [
+        $response = new Client()->post(self::$url.'/upload', [
             'deep' => [
                 'value' => $file,
             ],
@@ -256,28 +277,77 @@ final class CurlHandlerTest extends TestCase
     #[Override]
     public static function setUpBeforeClass(): void
     {
-        self::$pid = (int) exec('nohup php -S 127.0.0.1:8888 tests/server.php >/dev/null 2>&1 & echo $!');
+        $socket = stream_socket_server('tcp://127.0.0.1:0');
+
+        self::assertIsResource($socket);
+
+        $address = stream_socket_get_name($socket, false);
+        fclose($socket);
+
+        self::assertIsString($address);
+
+        self::$url = 'http://'.$address;
+        $output = tmpfile();
+
+        self::assertIsResource($output);
+
+        self::$output = $output;
+        $process = proc_open(
+            [PHP_BINARY, '-S', $address, 'tests/server.php'],
+            [
+                0 => ['pipe', 'r'],
+                1 => $output,
+                2 => $output,
+            ],
+            $pipes
+        );
+
+        if (!is_resource($process)) {
+            self::tearDownAfterClass();
+            self::fail('cURL test server could not be started.');
+        }
+
+        self::$process = $process;
+        fclose($pipes[0]);
 
         for ($i = 0; $i < 500; $i++) {
-            $socket = @fsockopen('127.0.0.1', 8888);
+            $socket = @stream_socket_client('tcp://'.$address, timeout: 0.1);
+            $running = proc_get_status($process)['running'];
 
             if ($socket) {
                 fclose($socket);
 
-                return;
+                if ($running) {
+                    return;
+                }
+            }
+
+            if (!$running) {
+                break;
             }
 
             usleep(10_000);
         }
 
-        exec('kill '.self::$pid.' 2>&1');
+        rewind($output);
+        $message = stream_get_contents($output);
+        self::tearDownAfterClass();
 
-        self::fail('cURL test server did not become ready.');
+        self::fail('cURL test server did not become ready: '.$message);
     }
 
     #[Override]
     public static function tearDownAfterClass(): void
     {
-        exec('kill '.self::$pid.' 2>&1');
+        if (is_resource(self::$process)) {
+            proc_terminate(self::$process);
+            proc_close(self::$process);
+            self::$process = null;
+        }
+
+        if (is_resource(self::$output)) {
+            fclose(self::$output);
+            self::$output = null;
+        }
     }
 }

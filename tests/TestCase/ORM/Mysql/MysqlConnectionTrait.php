@@ -63,6 +63,22 @@ trait MysqlConnectionTrait
     protected static function createSchema(Connection $db): void
     {
         $db->query(<<<'SQL'
+            CREATE TABLE cascade_parents (
+                id INT(10) UNSIGNED NOT NULL,
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $db->query(<<<'SQL'
+            CREATE TABLE cascade_children (
+                id INT(10) UNSIGNED NOT NULL,
+                cascade_parent_id INT(10) UNSIGNED NULL,
+                PRIMARY KEY (id),
+                FOREIGN KEY (cascade_parent_id) REFERENCES cascade_parents (id) ON DELETE RESTRICT
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $db->query(<<<'SQL'
             CREATE TABLE items (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
