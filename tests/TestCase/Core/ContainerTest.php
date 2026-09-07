@@ -12,7 +12,10 @@ use Fyre\Core\Traits\MacroTrait;
 use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Tests\Mock\Core\Container\ArgumentService;
+use Tests\Mock\Core\Container\CircularDependency;
+use Tests\Mock\Core\Container\CircularService;
 use Tests\Mock\Core\Container\ContainerService;
 use Tests\Mock\Core\Container\InnerService;
 use Tests\Mock\Core\Container\InvokableClass;
@@ -75,6 +78,16 @@ final class ContainerTest extends TestCase
             [1, 5, 3],
             $argumentService->getArguments()
         );
+    }
+
+    public function testBuildCircularDependency(): void
+    {
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessageIs(
+            'Class `'.CircularService::class.'` is dependent on itself. (`'.CircularService::class.'` > `'.CircularDependency::class.'`)'
+        );
+
+        $this->container->build(CircularService::class);
     }
 
     public function testBuildContainerDependency(): void
@@ -546,6 +559,73 @@ final class ContainerTest extends TestCase
             $service,
             $this->container->use(Service::class)
         );
+    }
+
+    public function testUseAfterCircularAlias(): void
+    {
+        $this->container->bind('service1', 'service2');
+        $this->container->bind('service2', 'service1');
+
+        try {
+            $this->container->use('service1');
+            $this->fail('Expected the circular alias to be rejected.');
+        } catch (ContainerException) {
+        }
+
+        $this->container->bind('service2', Service::class);
+
+        $this->assertInstanceOf(
+            Service::class,
+            $this->container->use('service1')
+        );
+    }
+
+    public function testUseAfterCircularDependency(): void
+    {
+        try {
+            $this->container->use(CircularService::class);
+            $this->fail('Expected the circular dependency to be rejected.');
+        } catch (ContainerException) {
+        }
+
+        $dependency = $this->createStub(CircularDependency::class);
+        $this->container->bind(CircularDependency::class, static fn(): CircularDependency => $dependency);
+
+        $this->assertInstanceOf(
+            CircularService::class,
+            $this->container->call(static fn(CircularService $service): CircularService => $service)
+        );
+    }
+
+    public function testUseAfterFactoryException(): void
+    {
+        $exception = new RuntimeException('Test exception.');
+        $this->container->bind('service', static fn(): never => throw $exception);
+
+        try {
+            $this->container->use('service');
+            $this->fail('Expected the factory to throw.');
+        } catch (RuntimeException $e) {
+            $this->assertSame($exception, $e);
+        }
+
+        $this->container->bind('service', Service::class);
+
+        $this->assertInstanceOf(
+            Service::class,
+            $this->container->use('service')
+        );
+    }
+
+    public function testUseCircularAlias(): void
+    {
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessageIs('Alias `service1` is dependent on itself. (service1 > service2 > service1)');
+
+        $this->container->bind('service1', 'service2');
+        $this->container->bind('service2', 'service1');
+
+        $this->container->use('service1');
     }
 
     public function testUseFactory(): void
