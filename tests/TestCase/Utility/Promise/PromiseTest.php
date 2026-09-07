@@ -173,6 +173,58 @@ final class PromiseTest extends TestCase
         );
     }
 
+    public function testRejectedFinallyPreservesReason(): void
+    {
+        $exception = new Exception('test');
+        $reason = null;
+
+        Promise::reject($exception)
+            ->finally(static fn(): string => 'ignored')
+            ->catch(static function(Throwable $error) use (&$reason): void {
+                $reason = $error;
+            });
+
+        $this->assertSame($exception, $reason);
+    }
+
+    public function testRejectedFinallyReplacesReasonOnException(): void
+    {
+        $exception = new Exception('cleanup');
+        $reason = null;
+
+        Promise::reject(new Exception('test'))
+            ->finally(static fn(): never => throw $exception)
+            ->catch(static function(Throwable $error) use (&$reason): void {
+                $reason = $error;
+            });
+
+        $this->assertSame($exception, $reason);
+    }
+
+    public function testRejectedFinallyWaitsForPromise(): void
+    {
+        $resolve = null;
+        $cleanup = new Promise(static function(Closure $resolver) use (&$resolve): void {
+            $resolve = $resolver;
+        });
+
+        $exception = new Exception('test');
+        $reason = null;
+
+        Promise::reject($exception)
+            ->finally(static fn(): PromiseInterface => $cleanup)
+            ->catch(static function(Throwable $error) use (&$reason): void {
+                $reason = $error;
+            });
+
+        $this->assertNull($reason);
+
+        $this->assertInstanceOf(Closure::class, $resolve);
+        $resolve();
+
+        $this->assertSame($exception, $reason);
+    }
+
     public function testThen(): void
     {
         $called = false;
