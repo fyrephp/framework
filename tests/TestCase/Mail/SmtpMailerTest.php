@@ -10,18 +10,24 @@ use Fyre\Mail\Exceptions\MailException;
 use Fyre\Mail\Handlers\SmtpMailer;
 use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Throwable;
 
+use function array_replace;
 use function array_shift;
 use function base64_encode;
+use function explode;
 use function fclose;
 use function fopen;
 use function fwrite;
 use function is_resource;
 use function rewind;
+use function stream_socket_accept;
+use function stream_socket_get_name;
+use function stream_socket_server;
 
 final class SmtpMailerTest extends TestCase
 {
@@ -38,6 +44,45 @@ final class SmtpMailerTest extends TestCase
      * @var string[]
      */
     protected array $sent = [];
+
+    /**
+     * @return array<string, array{array<string, bool>, string[], string}>
+     */
+    public static function connectFailureProvider(): array
+    {
+        return [
+            'invalid greeting' => [
+                [],
+                ['500 Error'],
+                'SMTP invalid reply: 500 Error',
+            ],
+            'hello rejected' => [
+                [],
+                ['220 Ready', '500 Error'],
+                'SMTP invalid reply: 500 Error',
+            ],
+            'STARTTLS rejected' => [
+                ['tls' => true],
+                ['220 Ready', '250 Hello', '454 TLS unavailable'],
+                'SMTP invalid reply: 454 TLS unavailable',
+            ],
+            'AUTH rejected' => [
+                ['auth' => true],
+                ['220 Ready', '250 Hello', '535 Authentication failed'],
+                'SMTP authentication failed.',
+            ],
+            'username rejected' => [
+                ['auth' => true],
+                ['220 Ready', '250 Hello', '334 Username', '535 Authentication failed'],
+                'SMTP authentication failed.',
+            ],
+            'password rejected' => [
+                ['auth' => true],
+                ['220 Ready', '250 Hello', '334 Username', '334 Password', '535 Authentication failed'],
+                'SMTP authentication failed.',
+            ],
+        ];
+    }
 
     /**
      * @return array<string, array{bool}>
@@ -124,6 +169,97 @@ final class SmtpMailerTest extends TestCase
             $this->socket = $socket;
             $this->authenticate();
         }, $this->mailer, SmtpMailer::class)();
+    }
+
+    /**
+     * @param array<string, bool> $options
+     * @param string[] $replies
+     */
+    #[DataProvider('connectFailureProvider')]
+    public function testConnectFailureClosesConnection(array $options, array $replies, string $message): void
+    {
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessageIs($message);
+
+        $server = stream_socket_server('tcp://127.0.0.1:0');
+        $this->assertIsResource($server);
+
+        try {
+            $address = stream_socket_get_name($server, false);
+            $this->assertIsString($address);
+
+            [$host, $port] = explode(':', $address);
+            $this->replies = $replies;
+
+            Closure::bind(function() use ($host, $port, $options): void {
+                /** @var SmtpMailer $this */
+                $this->config = array_replace($this->config, $options, [
+                    'host' => $host,
+                    'port' => $port,
+                ]);
+
+                try {
+                    $this->connect();
+                } finally {
+                    TestCase::assertNull($this->socket);
+                }
+            }, $this->mailer, SmtpMailer::class)();
+        } finally {
+            fclose($server);
+        }
+    }
+
+    #[RequiresPhpExtension('openssl')]
+    public function testConnectTlsNegotiationFailureClosesConnection(): void
+    {
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessageIs('SMTP TLS negotiation failed.');
+
+        $server = stream_socket_server('tcp://127.0.0.1:0');
+        $this->assertIsResource($server);
+
+        try {
+            $address = stream_socket_get_name($server, false);
+            $this->assertIsString($address);
+
+            [$host, $port] = explode(':', $address);
+
+            $mailer = $this->getStubBuilder(SmtpMailer::class)
+                ->setConstructorArgs([$this->container, [
+                    'host' => $host,
+                    'port' => $port,
+                    'tls' => true,
+                ]])
+                ->onlyMethods(['getData', 'sendData'])
+                ->getStub();
+
+            $mailer->method('getData')->willReturn(
+                '220 Ready',
+                '250 Hello',
+                '220 Ready to start TLS'
+            );
+            $mailer->method('sendData')
+                ->willReturnCallback(static function(string $data) use ($server): void {
+                    if ($data !== 'STARTTLS') {
+                        return;
+                    }
+
+                    $peer = stream_socket_accept($server, 1);
+                    TestCase::assertIsResource($peer);
+                    fclose($peer);
+                });
+
+            Closure::bind(function(): void {
+                /** @var SmtpMailer $this */
+                try {
+                    $this->connect();
+                } finally {
+                    TestCase::assertNull($this->socket);
+                }
+            }, $mailer, SmtpMailer::class)();
+        } finally {
+            fclose($server);
+        }
     }
 
     public function testDefaultPort(): void
