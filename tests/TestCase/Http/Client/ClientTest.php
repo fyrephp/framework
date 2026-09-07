@@ -6,6 +6,7 @@ namespace Tests\TestCase\Http\Client;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Client;
+use Fyre\Http\Client\ClientHandler;
 use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Handlers\MockHandler;
 use Fyre\Http\Client\Request;
@@ -17,6 +18,8 @@ use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamInterface;
+use RuntimeException;
 use stdClass;
 
 use function class_uses;
@@ -584,6 +587,80 @@ final class ClientTest extends TestCase
         ]);
 
         $this->assertSame($mockResponse, $response);
+    }
+
+    public function testRedirectBodyEmptyRead(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessageIs('Request body cannot be buffered for redirect replay.');
+
+        $body = $this->createStub(StreamInterface::class);
+        $body->method('isSeekable')
+            ->willReturn(false);
+        $body->method('read')
+            ->willReturn('');
+        $body->method('eof')
+            ->willReturn(false);
+
+        $handler = $this->createMock(ClientHandler::class);
+        $handler->expects($this->never())
+            ->method('send');
+
+        $client = new Client([
+            'handler' => $handler,
+        ]);
+        $request = new Request(
+            'https://example.com/redirect',
+            [
+                'method' => 'POST',
+                'body' => $body,
+            ]
+        );
+
+        $client->send($request, [
+            'maxRedirects' => 1,
+        ]);
+    }
+
+    public function testRedirectBodyRewindException(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessageIs('Request body cannot be replayed after redirect.');
+
+        $body = $this->createStub(StreamInterface::class);
+        $body->method('isSeekable')
+            ->willReturn(true);
+        $body->method('getSize')
+            ->willReturn(5);
+        $body->method('rewind')
+            ->willThrowException(new RuntimeException('Cannot rewind.'));
+
+        $redirectResponse = new Response([
+            'statusCode' => 307,
+            'headers' => [
+                'Location' => '/redirect-target',
+            ],
+        ]);
+
+        $handler = $this->createMock(ClientHandler::class);
+        $handler->expects($this->once())
+            ->method('send')
+            ->willReturn($redirectResponse);
+
+        $client = new Client([
+            'handler' => $handler,
+        ]);
+        $request = new Request(
+            'https://example.com/redirect',
+            [
+                'method' => 'POST',
+                'body' => $body,
+            ]
+        );
+
+        $client->send($request, [
+            'maxRedirects' => 1,
+        ]);
     }
 
     public function testRedirectBodySizeLimit(): void
