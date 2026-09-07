@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace Tests\TestCase\Auth;
 
 use Closure;
+use Fyre\Auth\PolicyRegistry;
 use Fyre\Http\Exceptions\ForbiddenException;
 use Fyre\ORM\ModelRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Entities\Post;
+use Tests\Mock\Entities\User;
 use Tests\Mock\Models\PostsModel;
 
 final class PolicyTest extends TestCase
@@ -68,6 +70,24 @@ final class PolicyTest extends TestCase
         $this->access->authorize('create', $resource);
     }
 
+    public function testPolicyCreateRequiresUser(): void
+    {
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionCode(403);
+        $this->expectExceptionMessageIs('Forbidden');
+
+        $policy = new class ()
+        {
+            public function create(User $user): bool
+            {
+                return true;
+            }
+        };
+        $this->container->use(PolicyRegistry::class)->map('Posts', $policy::class);
+
+        $this->access->authorize('create', 'Posts');
+    }
+
     /**
      * @param Closure(ModelRegistry): array{Post|PostsModel|string|null, 1?: int} $argsFactory
      */
@@ -94,5 +114,16 @@ final class PolicyTest extends TestCase
         $args = $argsFactory($this->modelRegistry);
 
         $this->access->authorize('update', ...$args);
+    }
+
+    public function testPolicyUpdateRequiresEntity(): void
+    {
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionCode(403);
+        $this->expectExceptionMessageIs('Forbidden');
+
+        $this->login();
+
+        $this->access->authorize('update', 'Posts');
     }
 }

@@ -140,6 +140,16 @@ final class AccessTest extends TestCase
         );
     }
 
+    public function testAfterRequiresUser(): void
+    {
+        $this->access->after(static fn(User $authUser): bool => false);
+        $this->access->after(static fn(User|null $authUser): bool => true);
+
+        $this->assertTrue(
+            $this->access->allows('test')
+        );
+    }
+
     public function testAfterResult(): void
     {
         $this->login();
@@ -231,6 +241,15 @@ final class AccessTest extends TestCase
         );
 
         $this->assertTrue($ran);
+    }
+
+    public function testAllowsRequiresUser(): void
+    {
+        $this->access->define('test', static fn(User $authUser): bool => true);
+
+        $this->assertFalse(
+            $this->access->allows('test')
+        );
     }
 
     #[DataProvider('anyProvider')]
@@ -450,6 +469,16 @@ final class AccessTest extends TestCase
 
         $this->assertTrue(
             $ranBefore
+        );
+    }
+
+    public function testBeforeRequiresUser(): void
+    {
+        $this->access->before(static fn(User $authUser): bool => false);
+        $this->access->before(static fn(User|null $authUser): bool => true);
+
+        $this->assertTrue(
+            $this->access->allows('test')
         );
     }
 
