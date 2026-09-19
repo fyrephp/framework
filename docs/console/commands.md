@@ -269,6 +269,14 @@ Common generators:
 
 When schema fields are included, `make:entity` maps `date`, `datetime`, and `time` columns to matching `Date`, `DateTime`, and `Time` property types and adds the required imports.
 
+`make:model` infers many-to-many relationships from junction tables with exactly two single-column foreign keys and a primary key or unique index covering the pair. The junction may contain additional columns. When both keys reference the same table, the conventional key identifies the source: for example, `user_id` and `blocked_user_id` referencing `users` use `user_id` as the source key.
+
+Many-to-many relationships use the target model alias, such as `Tags`. Self-references use the role identified by the target foreign key, such as `BlockedUsers` for `blocked_user_id`. If that alias conflicts with a junction model or another relationship, the generator warns and omits the relationship; configure it manually with distinct aliases for the related records and the junction. No alternative alias is invented automatically.
+
+Source binding keys come from the foreign key constraints. When the target key references a non-primary column, the generator warns and leaves the many-to-many relationship for manual configuration using the junction’s `BelongsTo` relationship.
+
+Unresolved alias conflicts produce warnings and omit those relationships. Define ambiguous relationships and junctions with more than two foreign keys manually. Composite relationship keys are unsupported.
+
 ```bash
 app make:controller Posts
 app make:enum Status --cases=Draft:draft,Published:published

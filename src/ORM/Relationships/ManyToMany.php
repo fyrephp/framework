@@ -255,9 +255,11 @@ class ManyToMany extends Relationship
     }
 
     /**
-     * Returns the target relationship.
+     * Returns the target relationship, reusing the junction's relationship when configured.
      *
      * @return BelongsTo<TJunction, TTarget> The BelongsTo instance.
+     *
+     * @throws InvalidArgumentException If the junction's relationship has an incompatible type, foreign key, or target.
      */
     public function getTargetRelationship(): BelongsTo
     {
@@ -266,6 +268,24 @@ class ManyToMany extends Relationship
         }
 
         $junction = $this->getJunction();
+        $relationship = $junction->getRelationship($this->name);
+
+        if ($relationship !== null) {
+            if (
+                !($relationship instanceof BelongsTo) ||
+                $relationship->getForeignKey() !== $this->getTargetForeignKey() ||
+                $relationship->getTarget() !== $this->getTarget()
+            ) {
+                throw new InvalidArgumentException(sprintf(
+                    'Relationship `%s` on `%s` is incompatible with the many-to-many relationship on `%s`.',
+                    $this->name,
+                    $junction->getAlias(),
+                    $this->getSource()->getAlias()
+                ));
+            }
+
+            return $this->targetRelationship = $relationship;
+        }
 
         $this->targetRelationship = $this->container->build(BelongsTo::class, [
             'name' => $this->name,
@@ -278,9 +298,7 @@ class ManyToMany extends Relationship
 
         assert($this->targetRelationship instanceof Relationship);
 
-        if (!$junction->hasRelationship($this->name)) {
-            $junction->addRelationship($this->targetRelationship);
-        }
+        $junction->addRelationship($this->targetRelationship);
 
         return $this->targetRelationship;
     }

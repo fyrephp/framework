@@ -247,6 +247,7 @@ Use `manyToMany()` when the source and target are linked through a junction (lin
 
 - Default strategy: `select` (also supports `subquery` and `cte`)
 - Junction model default (`through`): derived from the source model class alias and relationship name
+- Target binding key default: the target model’s first primary key column; configure the junction’s `BelongsTo` relationship to reference another unique column
 - When loaded, junction row data is attached to each related entity under `_joinData`
 - Save strategies: `append` or `replace` (default)
 
@@ -281,6 +282,24 @@ use Fyre\ORM\Model;
 #[ManyToMany('Tags', ['through' => 'PostsTags'])]
 class PostsModel extends Model {}
 ```
+
+To reference a non-primary target column, configure a `BelongsTo` relationship on the junction model using the same relationship name. For example, when `posts_tags.tag_code` references `tags.code`:
+
+```php
+// PostsModel::initialize()
+$this->manyToMany('Tags', [
+    'through' => 'PostsTags',
+    'targetForeignKey' => 'tag_code',
+]);
+
+// PostsTagsModel::initialize()
+$this->belongsTo('Tags', [
+    'foreignKey' => 'tag_code',
+    'bindingKey' => 'code',
+]);
+```
+
+The many-to-many relationship reuses this junction relationship. Its type must be `BelongsTo`, and its foreign key and target model must match the many-to-many configuration.
 
 ## Common relationship options
 

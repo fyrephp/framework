@@ -226,6 +226,15 @@ class MakeModelCommand extends Command
             $relationships = $schemaTable && !$noRelationships ?
                 $this->modelSourceBuilder->inferRelationships($schemaTable, $classAlias) :
                 [];
+
+            if ($schemaTable && !$noRelationships) {
+                $warnings = $this->modelSourceBuilder->getWarnings();
+
+                foreach ($warnings as $warning) {
+                    $this->io->warning($warning);
+                }
+            }
+
             $enums = $this->modelSourceBuilder->inferEnums($fields, $entityClass);
 
             $this->buildModelFile(

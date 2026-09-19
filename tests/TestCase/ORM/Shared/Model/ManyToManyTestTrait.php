@@ -920,6 +920,67 @@ trait ManyToManyTestTrait
         );
     }
 
+    public function testManyToManyJunctionForeignKeyMismatch(): void
+    {
+        $Contains = $this->modelRegistry->use('Contains');
+        $Contains->belongsTo('LinkedOthers', [
+            'classAlias' => 'Others',
+            'foreignKey' => 'item_id',
+        ]);
+
+        $relationship = $this->modelRegistry->use('Items')->manyToMany('LinkedOthers', [
+            'classAlias' => 'Others',
+            'through' => 'Contains',
+            'targetForeignKey' => 'contained_item_id',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Relationship `LinkedOthers` on `Contains` is incompatible with the many-to-many relationship on `Items`.');
+
+        $relationship->getTargetRelationship();
+    }
+
+    public function testManyToManyJunctionRelationshipTypeMismatch(): void
+    {
+        $Contains = $this->modelRegistry->use('Contains');
+        $Contains->hasMany('LinkedOthers', [
+            'classAlias' => 'Others',
+            'foreignKey' => 'contained_item_id',
+        ]);
+
+        $relationship = $this->modelRegistry->use('Items')->manyToMany('LinkedOthers', [
+            'classAlias' => 'Others',
+            'through' => 'Contains',
+            'targetForeignKey' => 'contained_item_id',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Relationship `LinkedOthers` on `Contains` is incompatible with the many-to-many relationship on `Items`.');
+
+        $relationship->getTargetRelationship();
+    }
+
+    public function testManyToManyJunctionTargetMismatch(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Contains = $this->modelRegistry->use('Contains');
+        $Contains->belongsTo('LinkedOthers', [
+            'classAlias' => 'Others',
+            'foreignKey' => 'contained_item_id',
+        ])->setTarget($Items);
+
+        $relationship = $Items->manyToMany('LinkedOthers', [
+            'classAlias' => 'Others',
+            'through' => 'Contains',
+            'targetForeignKey' => 'contained_item_id',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Relationship `LinkedOthers` on `Contains` is incompatible with the many-to-many relationship on `Items`.');
+
+        $relationship->getTargetRelationship();
+    }
+
     public function testManyToManyLoadRelatedEmpty(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -1266,6 +1327,49 @@ trait ManyToManyTestTrait
         );
     }
 
+    public function testManyToManySelfReferentialJunction(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Contains = $this->modelRegistry->use('Contains');
+
+        $relationship = $Items->manyToMany('ChildItems', [
+            'classAlias' => 'Items',
+            'through' => 'Contains',
+            'targetForeignKey' => 'contained_item_id',
+        ]);
+
+        $item = $Items->newEntity([
+            'name' => 'Parent',
+            'child_items' => [
+                ['name' => 'Child'],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $this->assertSame(
+            $Contains,
+            $relationship->getJunction()
+        );
+
+        $item = $Items->find()
+            ->where(['Items.name' => 'Parent'])
+            ->contain('ChildItems')
+            ->first();
+
+        $this->assertSame(
+            'Child',
+            $item->child_items[0]->name
+        );
+
+        $this->assertSame(
+            $item->child_items[0]->id,
+            $item->child_items[0]->_joinData->contained_item_id
+        );
+    }
+
     public function testManyToManySort(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -1378,6 +1482,58 @@ trait ManyToManyTestTrait
         $this->assertSame(
             'Alias.name',
             $relationship->getSort()
+        );
+    }
+
+    public function testManyToManyTargetBindingKey(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Contains = $this->modelRegistry->use('Contains');
+
+        $targetRelationship = $Contains->belongsTo('LinkedOthers', [
+            'classAlias' => 'Others',
+            'foreignKey' => 'contained_item_id',
+            'bindingKey' => 'value',
+        ]);
+
+        $relationship = $Items->manyToMany('LinkedOthers', [
+            'classAlias' => 'Others',
+            'through' => 'Contains',
+            'foreignKey' => 'item_id',
+            'targetForeignKey' => 'contained_item_id',
+        ]);
+
+        $item = $Items->newEntity([
+            'name' => 'Test',
+            'linked_others' => [
+                ['value' => 42],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $this->assertSame(
+            $Contains,
+            $relationship->getJunction()
+        );
+
+        $this->assertSame(
+            $targetRelationship,
+            $relationship->getTargetRelationship()
+        );
+
+        $item = $Items->find()->contain('LinkedOthers')->first();
+
+        $this->assertSame(
+            42,
+            $item->linked_others[0]->value
+        );
+
+        $this->assertSame(
+            42,
+            $item->linked_others[0]->_joinData->contained_item_id
         );
     }
 }

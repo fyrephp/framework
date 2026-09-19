@@ -107,6 +107,69 @@ final class MakeModelTest extends TestCase
         ];
     }
 
+    public function testInferRelationshipsAliasCollision(): void
+    {
+        $builder = $this->container->use(ModelSourceBuilder::class);
+        $relationships = $builder->inferRelationships($this->schema->table('users'), 'Users');
+
+        $this->assertArraysAreIdentical(
+            [[
+                'type' => ModelSourceBuilder::HAS_MANY,
+                'alias' => 'Posts',
+                'targetModel' => 'PostsModel',
+                'foreignKey' => ['user_id'],
+                'bindingKey' => ['id'],
+                'nullable' => false,
+                'options' => [],
+            ]],
+            $relationships
+        );
+
+        $this->assertSame(
+            [
+                'Cannot infer relationship `Audits` from `audits.audits_updated_by`: alias conflicts. Define this relationship manually with a distinct alias.',
+                'Cannot infer relationship `Audits` from `audits.audits_created_by`: alias conflicts. Define this relationship manually with a distinct alias.',
+            ],
+            $builder->getWarnings()
+        );
+    }
+
+    public function testInferRelationshipsMultipleJunctionsAliasCollision(): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE members_posts (
+                member_id INTEGER NOT NULL,
+                post_id INTEGER NOT NULL,
+                PRIMARY KEY (member_id, post_id),
+                FOREIGN KEY (member_id) REFERENCES members(id),
+                FOREIGN KEY (post_id) REFERENCES posts(id)
+            )
+        SQL);
+        $this->db->query(<<<'SQL'
+            CREATE TABLE saved_posts (
+                member_id INTEGER NOT NULL,
+                post_id INTEGER NOT NULL,
+                PRIMARY KEY (member_id, post_id),
+                FOREIGN KEY (member_id) REFERENCES members(id),
+                FOREIGN KEY (post_id) REFERENCES posts(id)
+            )
+        SQL);
+
+        $builder = $this->container->use(ModelSourceBuilder::class);
+        $relationships = $builder->inferRelationships($this->schema->table('members'), 'Members');
+
+        $this->assertSame([], $relationships);
+
+        $this->assertSame(
+            [
+                'Cannot infer relationship `BlockedMembers` from `blocked_members`: alias conflicts. Define this relationship manually with a distinct alias.',
+                'Cannot infer relationship `Posts` from `members_posts`: alias conflicts. Define this relationship manually with a distinct alias.',
+                'Cannot infer relationship `Posts` from `saved_posts`: alias conflicts. Define this relationship manually with a distinct alias.',
+            ],
+            $builder->getWarnings()
+        );
+    }
+
     public function testInferRelationshipsRequiresForeignKey(): void
     {
         $relationships = $this->container->use(ModelSourceBuilder::class)->inferRelationships(
@@ -115,6 +178,113 @@ final class MakeModelTest extends TestCase
         );
 
         $this->assertArraysAreIdentical([], $relationships);
+    }
+
+    public function testInferRelationshipsSelfReferentialAliasCollision(): void
+    {
+        $builder = $this->container->use(ModelSourceBuilder::class);
+
+        $this->assertSame(
+            [],
+            $builder->inferRelationships($this->schema->table('members'), 'Members')
+        );
+
+        $this->assertSame(
+            ['Cannot infer relationship `BlockedMembers` from `blocked_members`: alias conflicts. Define this relationship manually with a distinct alias.'],
+            $builder->getWarnings()
+        );
+    }
+
+    public function testInferRelationshipsSelfReferentialJunction(): void
+    {
+        $this->db->query('ALTER TABLE blocked_members RENAME TO member_blocks');
+
+        $relationships = $this->container->use(ModelSourceBuilder::class)->inferRelationships(
+            $this->schema->table('members'),
+            'Members'
+        );
+
+        $this->assertArraysAreIdentical(
+            [[
+                'type' => ModelSourceBuilder::MANY_TO_MANY,
+                'alias' => 'BlockedMembers',
+                'targetModel' => 'MembersModel',
+                'foreignKey' => ['member_id'],
+                'bindingKey' => ['id'],
+                'nullable' => false,
+                'options' => [
+                    'through' => 'MemberBlocks',
+                    'classAlias' => 'Members',
+                ],
+            ]],
+            $relationships
+        );
+    }
+
+    public function testInferRelationshipsSourceBindingKey(): void
+    {
+        $this->db->query('DROP TABLE blocked_members');
+        $this->db->query('ALTER TABLE members ADD code INTEGER NOT NULL');
+        $this->db->query('CREATE UNIQUE INDEX members_code ON members (code)');
+        $this->db->query(<<<'SQL'
+            CREATE TABLE member_blocks (
+                member_id INTEGER NOT NULL,
+                blocked_member_id INTEGER NOT NULL,
+                PRIMARY KEY (member_id, blocked_member_id),
+                FOREIGN KEY (member_id) REFERENCES members(code),
+                FOREIGN KEY (blocked_member_id) REFERENCES members(id)
+            )
+        SQL);
+
+        $relationships = $this->container->use(ModelSourceBuilder::class)->inferRelationships(
+            $this->schema->table('members'),
+            'Members'
+        );
+
+        $this->assertArraysAreIdentical(
+            [[
+                'type' => ModelSourceBuilder::MANY_TO_MANY,
+                'alias' => 'BlockedMembers',
+                'targetModel' => 'MembersModel',
+                'foreignKey' => ['member_id'],
+                'bindingKey' => ['code'],
+                'nullable' => false,
+                'options' => [
+                    'through' => 'MemberBlocks',
+                    'bindingKey' => 'code',
+                    'classAlias' => 'Members',
+                ],
+            ]],
+            $relationships
+        );
+    }
+
+    public function testInferRelationshipsTargetBindingKeyRequiresJunction(): void
+    {
+        $this->db->query('DROP TABLE blocked_members');
+        $this->db->query('ALTER TABLE members ADD code INTEGER NOT NULL');
+        $this->db->query('CREATE UNIQUE INDEX members_code ON members (code)');
+        $this->db->query(<<<'SQL'
+            CREATE TABLE blocked_members (
+                member_id INTEGER NOT NULL,
+                blocked_member_id INTEGER NOT NULL,
+                PRIMARY KEY (member_id, blocked_member_id),
+                FOREIGN KEY (member_id) REFERENCES members(id),
+                FOREIGN KEY (blocked_member_id) REFERENCES members(code)
+            )
+        SQL);
+
+        $builder = $this->container->use(ModelSourceBuilder::class);
+
+        $this->assertSame(
+            [],
+            $builder->inferRelationships($this->schema->table('members'), 'Members')
+        );
+
+        $this->assertContains(
+            'Cannot infer many-to-many relationship through `blocked_members`: configure the target binding key `code` on the junction relationship manually.',
+            $builder->getWarnings()
+        );
     }
 
     public function testMakeModel(): void
@@ -276,7 +446,7 @@ final class MakeModelTest extends TestCase
                     ' *',
                     ' * @property BelongsToRelationship<static, UsersModel> $Users',
                     ' * @property HasManyRelationship<static, PostsCategoriesModel> $PostsCategories',
-                    ' * @property HasManyRelationship<static, PostsLabelsModel> $PostsLabels',
+                    ' * @property ManyToManyRelationship<static, LabelsModel> $Labels',
                     ' * @property ManyToManyRelationship<static, TagsModel> $Tags',
                     ' * @use TimestampsTrait<BlogPost>',
                     ' */',
@@ -287,7 +457,8 @@ final class MakeModelTest extends TestCase
                     '#[HasMany(\'PostsCategories\', [',
                     '    \'foreignKey\' => \'post_id\',',
                     '])]',
-                    '#[HasMany(\'PostsLabels\', [',
+                    '#[ManyToMany(\'Labels\', [',
+                    '    \'through\' => \'PostsLabels\',',
                     '    \'foreignKey\' => \'post_id\',',
                     '])]',
                     '#[ManyToMany(\'Tags\', [',
@@ -464,28 +635,6 @@ final class MakeModelTest extends TestCase
         $this->assertFileDoesNotExist('tmp/Entities/BlogPost.php');
         $this->assertFileDoesNotExist('tmp/Fixtures/BlogPostFixture.php');
         $this->assertFileDoesNotExist('tmp/TestCase/BlogPostModelTest.php');
-    }
-
-    public function testMakeModelRelationshipAliasCollision(): void
-    {
-        $this->assertSame(
-            Command::CODE_ERROR,
-            $this->commandRunner->run('make:model', [
-                'User',
-                'table' => 'users',
-                'noFixture' => true,
-                'noTest' => true,
-            ])
-        );
-
-        rewind($this->error);
-        $this->assertSame(
-            "\033[0;31mRelationship alias `Audits` collides between ".
-            "`audits.audits_updated_by` and `audits.audits_created_by`.\033[0m".PHP_EOL,
-            stream_get_contents($this->error)
-        );
-        $this->assertFileDoesNotExist('tmp/Models/UserModel.php');
-        $this->assertFileDoesNotExist('tmp/Entities/User.php');
     }
 
     public function testMakeModelRelationshipImportCollision(): void
@@ -836,6 +985,57 @@ final class MakeModelTest extends TestCase
         );
     }
 
+    public function testMakeModelSelfReferentialJunction(): void
+    {
+        $this->db->query('ALTER TABLE blocked_members RENAME TO member_blocks');
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('make:model', [
+                'Members',
+                'noEntity' => true,
+                'noFields' => true,
+                'noFixture' => true,
+                'noTest' => true,
+            ])
+        );
+
+        $this->assertFileMatchesFormat(
+            Make::loadStub('model', [
+                '{namespace}' => 'Example\Models',
+                '{uses}' => implode(PHP_EOL, [
+                    'use Example\Entities\Member;',
+                    'use Fyre\Form\Validator;',
+                    'use Fyre\ORM\Attributes\ManyToMany;',
+                    'use Fyre\ORM\Model;',
+                    'use Fyre\ORM\Relationships\ManyToMany as ManyToManyRelationship;',
+                    'use Fyre\ORM\RuleSet;',
+                    'use Override;',
+                ]),
+                '{docblock}' => implode(PHP_EOL, [
+                    '/**',
+                    ' * @extends Model<Member>',
+                    ' *',
+                    ' * @property ManyToManyRelationship<static, MembersModel> $BlockedMembers',
+                    ' */',
+                ]),
+                '{attributes}'.PHP_EOL => implode(PHP_EOL, [
+                    '#[ManyToMany(\'BlockedMembers\', [',
+                    '    \'through\' => \'MemberBlocks\',',
+                    '    \'classAlias\' => \'Members\',',
+                    '])]',
+                    '',
+                ]),
+                '{class}' => 'MembersModel',
+                '{traits}'.PHP_EOL => '',
+                '{properties}'.PHP_EOL => '',
+                '{rules}'.PHP_EOL => '',
+                '{validator}'.PHP_EOL => '',
+            ]),
+            'tmp/Models/MembersModel.php'
+        );
+    }
+
     #[Override]
     protected function setUp(): void
     {
@@ -893,6 +1093,8 @@ final class MakeModelTest extends TestCase
         $this->db = $container->use(ConnectionManager::class)->use();
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
 
+        $this->db->query('DROP TABLE IF EXISTS blocked_members');
+        $this->db->query('DROP TABLE IF EXISTS members');
         $this->db->query('DROP TABLE IF EXISTS posts_labels');
         $this->db->query('DROP TABLE IF EXISTS labels');
         $this->db->query('DROP TABLE IF EXISTS posts_categories');
@@ -904,6 +1106,24 @@ final class MakeModelTest extends TestCase
         $this->db->query('DROP TABLE IF EXISTS audits');
         $this->db->query('DROP TABLE IF EXISTS users');
 
+        $this->db->query(<<<'SQL'
+            CREATE TABLE members (
+                id INTEGER NOT NULL,
+                PRIMARY KEY (id)
+            )
+        SQL);
+        $this->db->query(<<<'SQL'
+            CREATE TABLE blocked_members (
+                id INTEGER NOT NULL,
+                member_id INTEGER NOT NULL,
+                blocked_member_id INTEGER NOT NULL,
+                created DATETIME NULL DEFAULT NULL,
+                PRIMARY KEY (id),
+                FOREIGN KEY (member_id) REFERENCES members(id),
+                FOREIGN KEY (blocked_member_id) REFERENCES members(id)
+            )
+        SQL);
+        $this->db->query('CREATE UNIQUE INDEX blocked_members_pair ON blocked_members (member_id, blocked_member_id)');
         $this->db->query(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER NOT NULL,
@@ -993,6 +1213,11 @@ final class MakeModelTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
+        $this->db->query('DROP TABLE IF EXISTS member_blocks');
+        $this->db->query('DROP TABLE IF EXISTS saved_posts');
+        $this->db->query('DROP TABLE IF EXISTS members_posts');
+        $this->db->query('DROP TABLE IF EXISTS blocked_members');
+        $this->db->query('DROP TABLE IF EXISTS members');
         $this->db->query('DROP TABLE IF EXISTS posts_labels');
         $this->db->query('DROP TABLE IF EXISTS labels');
         $this->db->query('DROP TABLE IF EXISTS posts_categories');
@@ -1026,6 +1251,7 @@ final class MakeModelTest extends TestCase
         @unlink('tmp/Models/AuditModel.php');
         @unlink('tmp/Models/BlogPostModel.php');
         @unlink('tmp/Models/ExampleModel.php');
+        @unlink('tmp/Models/MembersModel.php');
         @unlink('tmp/Models/UserModel.php');
         @unlink('tmp/TestCase/BlogPostModelTest.php');
         @unlink('tmp/TestCase/ExampleModelTest.php');

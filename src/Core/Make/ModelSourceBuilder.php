@@ -37,6 +37,8 @@ use InvalidArgumentException;
 use Override;
 use ReflectionClass;
 
+use function array_column;
+use function array_count_values;
 use function array_diff;
 use function array_map;
 use function array_unique;
@@ -79,6 +81,11 @@ class ModelSourceBuilder
     public const HAS_ONE = 'hasOne';
 
     public const MANY_TO_MANY = 'manyToMany';
+
+    /**
+     * @var string[]
+     */
+    protected array $warnings = [];
 
     /**
      * Constructs a ModelSourceBuilder.
@@ -185,6 +192,16 @@ class ModelSourceBuilder
     }
 
     /**
+     * Returns warnings from the latest relationship inference.
+     *
+     * @return string[] The warnings.
+     */
+    public function getWarnings(): array
+    {
+        return $this->warnings;
+    }
+
+    /**
      * Infers enum definitions from schema fields.
      *
      * @param Column[] $fields The schema fields.
@@ -212,11 +229,10 @@ class ModelSourceBuilder
      * @param Table $table The source table.
      * @param string $sourceAlias The source model alias.
      * @return RelationshipData[] The inferred relationships.
-     *
-     * @throws InvalidArgumentException If two relationships use the same alias.
      */
     public function inferRelationships(Table $table, string $sourceAlias): array
     {
+        $this->warnings = [];
         $relationships = [];
         $schema = $table->getSchema();
 
@@ -265,24 +281,7 @@ class ModelSourceBuilder
             }
         }
 
-        $usedAliases = [];
-
-        foreach ($relationships as $origin => $relationship) {
-            $alias = $relationship['alias'];
-
-            if (isset($usedAliases[$alias])) {
-                throw new InvalidArgumentException(sprintf(
-                    'Relationship alias `%s` collides between `%s` and `%s`.',
-                    $alias,
-                    $usedAliases[$alias],
-                    $origin
-                ));
-            }
-
-            $usedAliases[$alias] = $origin;
-        }
-
-        return array_values($relationships);
+        return $this->filterRelationships($relationships, $table, $sourceAlias);
     }
 
     /**
@@ -379,6 +378,49 @@ class ModelSourceBuilder
     }
 
     /**
+     * Removes relationships whose aliases conflict with other relationships or models.
+     *
+     * @param array<string, RelationshipData> $relationships The inferred relationships.
+     * @param Table $table The source table.
+     * @param string $sourceAlias The source model alias.
+     * @return RelationshipData[] The unambiguous relationships.
+     */
+    protected function filterRelationships(array $relationships, Table $table, string $sourceAlias): array
+    {
+        $models = [];
+        $schema = $table->getSchema();
+        $tables = $schema->tables();
+
+        foreach ($tables as $schemaTable) {
+            $alias = $schemaTable->getName() |> $this->modelAlias(...);
+            $models[$alias] = $alias.'Model';
+        }
+
+        $counts = array_column($relationships, 'alias') |> array_count_values(...);
+
+        foreach ($relationships as $origin => $relationship) {
+            $alias = $relationship['alias'];
+
+            if (
+                $alias !== $sourceAlias &&
+                $counts[$alias] === 1 &&
+                (!isset($models[$alias]) || $models[$alias] === $relationship['targetModel'])
+            ) {
+                continue;
+            }
+
+            $this->warnings[] = sprintf(
+                'Cannot infer relationship `%s` from `%s`: alias conflicts. Define this relationship manually with a distinct alias.',
+                $alias,
+                $origin
+            );
+            unset($relationships[$origin]);
+        }
+
+        return array_values($relationships);
+    }
+
+    /**
      * Builds a role-specific alias from a foreign key.
      *
      * @param string $targetAlias The target model alias.
@@ -443,6 +485,7 @@ class ModelSourceBuilder
             return null;
         }
 
+        $schema = $source->getSchema();
         $foreignKeys = $junction->foreignKeys();
 
         if (
@@ -461,9 +504,25 @@ class ModelSourceBuilder
         $targetForeignKey = $foreignKeys->find(
             static fn(ForeignKey $foreignKey): bool => $foreignKey->getReferencedTable() !== $source->getName()
         );
+
+        // For self-references, the conventional key identifies the source side.
+        if (!$targetForeignKey) {
+            $sourceKey = $source->getName()
+                |> $this->modelAlias(...)
+                |> $this->modelKey(...);
+            $sourceForeignKey = $foreignKeys->find(
+                static fn(ForeignKey $foreignKey): bool => $foreignKey->getReferencedTable() === $source->getName() &&
+                    $foreignKey->getColumns()[0] === $sourceKey
+            );
+            $targetForeignKey = $foreignKeys->find(
+                static fn(ForeignKey $foreignKey): bool => $foreignKey !== $sourceForeignKey &&
+                    $foreignKey->getReferencedTable() === $source->getName()
+            );
+        }
+
         $targetName = $targetForeignKey?->getReferencedTable();
 
-        if (!$sourceForeignKey || !$targetForeignKey || !$targetName || !$source->getSchema()->hasTable($targetName)) {
+        if (!$sourceForeignKey || !$targetForeignKey || !$targetName || !$schema->hasTable($targetName)) {
             return null;
         }
 
@@ -472,7 +531,7 @@ class ModelSourceBuilder
             ...$targetForeignKey->getColumns(),
         ] |> array_unique(...);
 
-        if (count($junctionColumns) !== 2 || !static::columnsMatch($junction->columnNames(), $junctionColumns)) {
+        if (count($junctionColumns) !== 2) {
             return null;
         }
 
@@ -486,12 +545,23 @@ class ModelSourceBuilder
             return null;
         }
 
-        $targetAlias = $this->modelAlias($targetName);
+        $target = $schema->table($targetName);
+        $targetAlias = $targetName === $source->getName() ? $sourceAlias : $this->modelAlias($targetName);
         $junctionAlias = $junction->getName() |> $this->modelAlias(...);
         $sourceColumns = $sourceForeignKey->getColumns();
         $sourceReferencedColumns = $sourceForeignKey->getReferencedColumns();
+        $sourcePrimaryKey = $source->primaryKey()[0] ?? null;
         $targetColumns = $targetForeignKey->getColumns();
-        $aliases = [$sourceAlias, $targetAlias];
+        $targetReferencedColumns = $targetForeignKey->getReferencedColumns();
+        $targetPrimaryKey = $target->primaryKey()[0] ?? null;
+        $alias = $targetAlias;
+
+        if ($targetName === $source->getName()) {
+            $alias = $this->foreignKeyAlias($targetAlias, $targetColumns[0])
+                |> $this->inflector->pluralize(...);
+        }
+
+        $aliases = [$sourceAlias, $alias];
         $options = [];
 
         natsort($aliases);
@@ -504,17 +574,31 @@ class ModelSourceBuilder
             $options['foreignKey'] = $sourceColumns[0];
         }
 
-        if ($sourceReferencedColumns[0] !== 'id') {
+        if ($sourceReferencedColumns[0] !== $sourcePrimaryKey) {
             $options['bindingKey'] = $sourceReferencedColumns[0];
         }
 
-        if ($targetColumns[0] !== $this->modelKey($targetAlias)) {
+        if ($targetColumns[0] !== $this->modelKey($alias)) {
             $options['targetForeignKey'] = $targetColumns[0];
+        }
+
+        if ($targetReferencedColumns[0] !== $targetPrimaryKey) {
+            $this->warnings[] = sprintf(
+                'Cannot infer many-to-many relationship through `%s`: configure the target binding key `%s` on the junction relationship manually.',
+                $junction->getName(),
+                $targetReferencedColumns[0]
+            );
+
+            return null;
+        }
+
+        if ($alias !== $targetAlias) {
+            $options['classAlias'] = $targetAlias;
         }
 
         return [
             'type' => static::MANY_TO_MANY,
-            'alias' => $targetAlias,
+            'alias' => $alias,
             'targetModel' => $targetAlias.'Model',
             'foreignKey' => $sourceColumns,
             'bindingKey' => $sourceReferencedColumns,
