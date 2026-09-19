@@ -86,7 +86,7 @@ final class MakeEntityTest extends TestCase
                 '{namespace}' => 'Example\Entities',
                 '{class}' => 'Example',
                 '{uses}' => 'use Fyre\ORM\Entity;',
-                '{docblock}' => '',
+                '{docblock}'.PHP_EOL => '',
                 '{body}' => '    //',
             ]),
             $filePath
@@ -115,7 +115,7 @@ final class MakeEntityTest extends TestCase
                     'use Fyre\ORM\Entity;',
                     'use Fyre\Utility\DateTime\Date;',
                 ]),
-                '{docblock}' => implode(PHP_EOL, [
+                '{docblock}'.PHP_EOL => implode(PHP_EOL, [
                     '/**',
                     ' * @property Date $published_on',
                     ' */',
@@ -149,7 +149,7 @@ final class MakeEntityTest extends TestCase
                     'use Fyre\ORM\Entity;',
                     'use Fyre\Utility\DateTime\DateTime;',
                 ]),
-                '{docblock}' => implode(PHP_EOL, [
+                '{docblock}'.PHP_EOL => implode(PHP_EOL, [
                     '/**',
                     ' * @property DateTime $created_at',
                     ' */',
@@ -209,7 +209,7 @@ final class MakeEntityTest extends TestCase
                 '{namespace}' => 'Example\Entities',
                 '{class}' => 'Example',
                 '{uses}' => 'use Fyre\ORM\Entity;',
-                '{docblock}' => '',
+                '{docblock}'.PHP_EOL => '',
                 '{body}' => '    //',
             ]),
             $filePath
@@ -241,7 +241,7 @@ final class MakeEntityTest extends TestCase
                     'use Fyre\ORM\Entity;',
                     'use Tests\Mock\Entities\User;',
                 ]),
-                '{docblock}' => implode(PHP_EOL, [
+                '{docblock}'.PHP_EOL => implode(PHP_EOL, [
                     '/**',
                     ' * @property User $user',
                     ' */',
@@ -336,7 +336,7 @@ final class MakeEntityTest extends TestCase
                     'use Fyre\ORM\Entity;',
                     'use Other\Entities\Author;',
                 ]),
-                '{docblock}' => implode(PHP_EOL, [
+                '{docblock}'.PHP_EOL => implode(PHP_EOL, [
                     '/**',
                     ' * @property Author $author',
                     ' * @property Tag[] $tags',
@@ -371,7 +371,7 @@ final class MakeEntityTest extends TestCase
                     'use Fyre\ORM\Entity;',
                     'use Fyre\Utility\DateTime\Time;',
                 ]),
-                '{docblock}' => implode(PHP_EOL, [
+                '{docblock}'.PHP_EOL => implode(PHP_EOL, [
                     '/**',
                     ' * @property Time $starts_at',
                     ' */',

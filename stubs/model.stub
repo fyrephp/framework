@@ -9,15 +9,19 @@ namespace {namespace};
 {attributes}
 class {class} extends Model
 {
-{traits}{properties}    #[Override]
+{traits}
+{properties}
+    #[Override]
     public function buildRules(RuleSet $rules): RuleSet
     {
-{rules}        return $rules;
+{rules}
+        return $rules;
     }
 
     #[Override]
     public function buildValidator(Validator $validator): Validator
     {
-{validator}        return $validator;
+{validator}
+        return $validator;
     }
 }

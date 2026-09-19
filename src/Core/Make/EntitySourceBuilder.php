@@ -72,7 +72,7 @@ class EntitySourceBuilder
             '{namespace}' => $namespace,
             '{class}' => $className,
             '{uses}' => static::buildUses($namespace, $fields, $relationships),
-            '{docblock}' => static::buildDocBlock($fields, $relationships),
+            '{docblock}'.PHP_EOL => static::buildDocBlock($fields, $relationships),
             '{body}' => static::buildBody($fields),
         ]);
     }

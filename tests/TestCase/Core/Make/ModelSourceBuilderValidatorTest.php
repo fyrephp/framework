@@ -61,12 +61,12 @@ final class ModelSourceBuilderValidatorTest extends TestCase
                     ' * @extends Model<Item>',
                     ' */',
                 ]),
-                '{attributes}' => '',
+                '{attributes}'.PHP_EOL => '',
                 '{class}' => 'ItemsModel',
-                '{traits}' => '',
-                '{properties}' => '',
-                '{rules}' => '',
-                '{validator}' => implode(PHP_EOL, [
+                '{traits}'.PHP_EOL => '',
+                '{properties}'.PHP_EOL => '',
+                '{rules}'.PHP_EOL => '',
+                '{validator}'.PHP_EOL => implode(PHP_EOL, [
                     '        $validator->add(\'code\', Rule::required(), on: \'create\', name: \'required\');',
                     '        $validator->add(\'code\', Rule::integer(), name: \'integer\');',
                     '',
@@ -119,16 +119,16 @@ final class ModelSourceBuilderValidatorTest extends TestCase
                     ' * @use TimestampsTrait<Item>',
                     ' */',
                 ]),
-                '{attributes}' => '',
+                '{attributes}'.PHP_EOL => '',
                 '{class}' => 'ItemsModel',
-                '{traits}' => implode(PHP_EOL, [
+                '{traits}'.PHP_EOL => implode(PHP_EOL, [
                     '    use TimestampsTrait;',
                     '',
                     '',
                 ]),
-                '{properties}' => '',
-                '{rules}' => '',
-                '{validator}' => implode(PHP_EOL, [
+                '{properties}'.PHP_EOL => '',
+                '{rules}'.PHP_EOL => '',
+                '{validator}'.PHP_EOL => implode(PHP_EOL, [
                     '        $validator->add(\'created\', Rule::dateTime(), name: \'datetime\');',
                     '',
                     '',

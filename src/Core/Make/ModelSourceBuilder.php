@@ -143,12 +143,12 @@ class ModelSourceBuilder
                 $validator
             ),
             '{docblock}' => static::buildDocBlock($entityClass, $relationships, $traits),
-            '{attributes}' => static::buildAttributes($enums, $relationships),
+            '{attributes}'.PHP_EOL => static::buildAttributes($enums, $relationships),
             '{class}' => $className,
-            '{traits}' => static::buildTraits($traits),
-            '{properties}' => static::buildProperties($connection, $table),
-            '{rules}' => static::buildStatements($rules),
-            '{validator}' => static::buildStatements($validator),
+            '{traits}'.PHP_EOL => static::buildTraits($traits),
+            '{properties}'.PHP_EOL => static::buildProperties($connection, $table),
+            '{rules}'.PHP_EOL => static::buildStatements($rules),
+            '{validator}'.PHP_EOL => static::buildStatements($validator),
         ]);
     }
 

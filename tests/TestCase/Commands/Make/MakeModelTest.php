@@ -154,12 +154,12 @@ final class MakeModelTest extends TestCase
                     ' * @extends Model<Example>',
                     ' */',
                 ]),
-                '{attributes}' => '',
+                '{attributes}'.PHP_EOL => '',
                 '{class}' => 'ExampleModel',
-                '{traits}' => '',
-                '{properties}' => '',
-                '{rules}' => '',
-                '{validator}' => '',
+                '{traits}'.PHP_EOL => '',
+                '{properties}'.PHP_EOL => '',
+                '{rules}'.PHP_EOL => '',
+                '{validator}'.PHP_EOL => '',
             ]),
             $filePath
         );
@@ -197,18 +197,18 @@ final class MakeModelTest extends TestCase
                     ' * @extends Model<Example>',
                     ' */',
                 ]),
-                '{attributes}' => '',
+                '{attributes}'.PHP_EOL => '',
                 '{class}' => 'ExampleModel',
-                '{traits}' => '',
-                '{properties}' => implode(PHP_EOL, [
+                '{traits}'.PHP_EOL => '',
+                '{properties}'.PHP_EOL => implode(PHP_EOL, [
                     '    protected array $connectionKeys = [',
                     '        self::WRITE => \'alternate\',',
                     '    ];',
                     '',
                     '',
                 ]),
-                '{rules}' => '',
-                '{validator}' => '',
+                '{rules}'.PHP_EOL => '',
+                '{validator}'.PHP_EOL => '',
             ]),
             'tmp/Models/ExampleModel.php'
         );
@@ -281,7 +281,7 @@ final class MakeModelTest extends TestCase
                     ' * @use TimestampsTrait<BlogPost>',
                     ' */',
                 ]),
-                '{attributes}' => implode(PHP_EOL, [
+                '{attributes}'.PHP_EOL => implode(PHP_EOL, [
                     '#[EnumField(\'title\', BlogPostTitle::class)]',
                     '#[BelongsTo(\'Users\')]',
                     '#[HasMany(\'PostsCategories\', [',
@@ -297,10 +297,10 @@ final class MakeModelTest extends TestCase
                     '',
                 ]),
                 '{class}' => 'BlogPostModel',
-                '{traits}' => '    use TimestampsTrait;'.PHP_EOL.PHP_EOL,
-                '{properties}' => '    protected string $table = \'posts\';'.PHP_EOL.PHP_EOL,
-                '{rules}' => '        $rules->add(RuleSet::existsIn([\'user_id\'], \'Users\'));'.PHP_EOL.PHP_EOL,
-                '{validator}' => implode(PHP_EOL, [
+                '{traits}'.PHP_EOL => '    use TimestampsTrait;'.PHP_EOL.PHP_EOL,
+                '{properties}'.PHP_EOL => '    protected string $table = \'posts\';'.PHP_EOL.PHP_EOL,
+                '{rules}'.PHP_EOL => '        $rules->add(RuleSet::existsIn([\'user_id\'], \'Users\'));'.PHP_EOL.PHP_EOL,
+                '{validator}'.PHP_EOL => implode(PHP_EOL, [
                     '        $validator->add(\'user_id\', Rule::required(), on: \'create\', name: \'required\');',
                     '        $validator->add(\'user_id\', Rule::integer(), name: \'integer\');',
                     '',
@@ -406,12 +406,12 @@ final class MakeModelTest extends TestCase
                     ' * @extends Model<Example>',
                     ' */',
                 ]),
-                '{attributes}' => '',
+                '{attributes}'.PHP_EOL => '',
                 '{class}' => 'ExampleModel',
-                '{traits}' => '',
-                '{properties}' => '',
-                '{rules}' => '',
-                '{validator}' => '',
+                '{traits}'.PHP_EOL => '',
+                '{properties}'.PHP_EOL => '',
+                '{rules}'.PHP_EOL => '',
+                '{validator}'.PHP_EOL => '',
             ]),
             $filePath
         );
@@ -581,11 +581,11 @@ final class MakeModelTest extends TestCase
                 ' * @property BelongsToRelationship<static, UsersModel> $Users',
                 ' */',
             ]),
-            '{attributes}' => '#[BelongsTo(\'Users\')]'.PHP_EOL,
-            '{traits}' => '',
-            '{properties}' => '',
-            '{rules}' => '',
-            '{validator}' => '',
+            '{attributes}'.PHP_EOL => '#[BelongsTo(\'Users\')]'.PHP_EOL,
+            '{traits}'.PHP_EOL => '',
+            '{properties}'.PHP_EOL => '',
+            '{rules}'.PHP_EOL => '',
+            '{validator}'.PHP_EOL => '',
         ];
         $uses = [
             'use Example\Entities\Post;',
@@ -691,18 +691,18 @@ final class MakeModelTest extends TestCase
                     ' * @property BelongsToRelationship<static, UsersModel> $Users',
                     ' */',
                 ]),
-                '{attributes}' => '#[BelongsTo(\'Users\')]'.PHP_EOL,
+                '{attributes}'.PHP_EOL => '#[BelongsTo(\'Users\')]'.PHP_EOL,
                 '{class}' => 'PostsModel',
-                '{traits}' => '',
-                '{properties}' => '',
-                '{rules}' => implode(PHP_EOL, [
+                '{traits}'.PHP_EOL => '',
+                '{properties}'.PHP_EOL => '',
+                '{rules}'.PHP_EOL => implode(PHP_EOL, [
                     '        $rules->add(RuleSet::existsIn([\'user_id\'], \'Users\'));',
                     '',
                     '        $rules->add(RuleSet::isUnique([\'email\']));',
                     '',
                     '',
                 ]),
-                '{validator}' => '',
+                '{validator}'.PHP_EOL => '',
             ]),
             $source
         );
@@ -746,16 +746,16 @@ final class MakeModelTest extends TestCase
                     ' * @extends Model<User>',
                     ' */',
                 ]),
-                '{attributes}' => '',
+                '{attributes}'.PHP_EOL => '',
                 '{class}' => 'UsersModel',
-                '{traits}' => '',
-                '{properties}' => '',
-                '{rules}' => implode(PHP_EOL, [
+                '{traits}'.PHP_EOL => '',
+                '{properties}'.PHP_EOL => '',
+                '{rules}'.PHP_EOL => implode(PHP_EOL, [
                     '        $rules->add(RuleSet::isUnique([\'email\']));',
                     '',
                     '',
                 ]),
-                '{validator}' => '',
+                '{validator}'.PHP_EOL => '',
             ]),
             $source
         );
