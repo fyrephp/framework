@@ -1367,12 +1367,12 @@ trait ManyToManyTestTrait
 
         $this->assertSame(
             'Child',
-            $item->child_items[0]->name
+            $item->get('child_items')[0]->name
         );
 
         $this->assertSame(
-            $item->child_items[0]->id,
-            $item->child_items[0]->_joinData->contained_item_id
+            $item->get('child_items')[0]->id,
+            $item->get('child_items')[0]->_joinData->contained_item_id
         );
     }
 
@@ -1539,12 +1539,12 @@ trait ManyToManyTestTrait
 
         $this->assertSame(
             42,
-            $item->linked_others[0]->value
+            $item->get('linked_others')[0]->value
         );
 
         $this->assertSame(
             42,
-            $item->linked_others[0]->_joinData->contained_item_id
+            $item->get('linked_others')[0]->_joinData->contained_item_id
         );
     }
 }
