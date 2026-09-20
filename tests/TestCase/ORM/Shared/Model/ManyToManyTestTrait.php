@@ -7,6 +7,7 @@ use Fyre\ORM\Entity;
 use Fyre\ORM\Queries\SelectQuery;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Mock\Entities\Item;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\Tag;
 
@@ -1359,6 +1360,11 @@ trait ManyToManyTestTrait
             ->contain('ChildItems')
             ->first();
 
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
+
         $this->assertSame(
             'Child',
             $item->child_items[0]->name
@@ -1525,6 +1531,11 @@ trait ManyToManyTestTrait
         );
 
         $item = $Items->find()->contain('LinkedOthers')->first();
+
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
 
         $this->assertSame(
             42,
