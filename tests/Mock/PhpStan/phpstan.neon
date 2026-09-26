@@ -25,3 +25,21 @@ services:
                         - Tests\Mock\Models
         tags:
             - phpstan.broker.dynamicMethodReturnTypeExtension
+    -
+        class: Fyre\TestSuite\PhpStan\Extensions\TypeFunctionReturnTypeExtension
+        arguments:
+            typeMap:
+                money: Fyre\DB\Types\DecimalType
+                double: Fyre\DB\Types\FloatType
+                int: Fyre\DB\Types\DecimalType
+        tags:
+            - phpstan.broker.dynamicFunctionReturnTypeExtension
+    -
+        class: Fyre\TestSuite\PhpStan\Extensions\TypeParserUseReturnTypeExtension
+        arguments:
+            typeMap:
+                money: Fyre\DB\Types\DecimalType
+                double: Fyre\DB\Types\FloatType
+                int: Fyre\DB\Types\DecimalType
+        tags:
+            - phpstan.broker.dynamicMethodReturnTypeExtension

@@ -50,6 +50,33 @@ services:
 
 Both extensions default to the `App\Models` namespace. Configure their `modelNamespaces` argument for other namespaces, or `modelNamespacesOverrides` for per-class overrides. Unknown aliases and non-constant strings fall back to `Fyre\ORM\Model`.
 
+Register the database type extensions to infer concrete classes from `type('decimal')` and `TypeParser::use('decimal')`, including the `numeric-string|null` return type of `DecimalType::parse()`:
+
+```neon
+services:
+    -
+        class: Fyre\TestSuite\PhpStan\Extensions\TypeFunctionReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicFunctionReturnTypeExtension
+    -
+        class: Fyre\TestSuite\PhpStan\Extensions\TypeParserUseReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicMethodReturnTypeExtension
+```
+
+Both extensions use the default `TypeParser` mappings and aliases. Unknown literal names resolve to `StringType`, matching the runtime fallback; non-constant names retain `Type`. Calling `type()` or `type(null)` returns `TypeParser`.
+
+If your application calls `TypeParser::map()`, configure the same mappings on both extensions using their `typeMap` argument:
+
+```neon
+arguments:
+    typeMap:
+        money: App\DB\Types\MoneyType
+        decimal: App\DB\Types\CustomDecimalType
+```
+
+These mappings extend or replace the defaults. Runtime calls to `map()` are not tracked automatically.
+
 ## Testing overview
 
 Choose the tool by what the test needs:

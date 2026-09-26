@@ -582,7 +582,7 @@ if (!function_exists('type')) {
      * Returns the TypeParser or resolves a Type by name.
      *
      * @param string|null $type The value type.
-     * @return Type|TypeParser The TypeParser or Type.
+     * @return ($type is null ? TypeParser : Type) The TypeParser or Type.
      */
     function type(string|null $type = null): Type|TypeParser
     {

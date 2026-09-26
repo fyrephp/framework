@@ -58,3 +58,11 @@ services:
                         - Tests\Mock\Models\ORM\SoftDelete
         tags:
             - phpstan.broker.dynamicMethodReturnTypeExtension
+    -
+        class: Fyre\TestSuite\PhpStan\Extensions\TypeFunctionReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicFunctionReturnTypeExtension
+    -
+        class: Fyre\TestSuite\PhpStan\Extensions\TypeParserUseReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicMethodReturnTypeExtension
