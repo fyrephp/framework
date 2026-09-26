@@ -272,7 +272,7 @@ class Rule
     /**
      * Creates an "in" Rule.
      *
-     * @param string[] $values The values.
+     * @param array<bool|float|int|string> $values The values.
      * @return static The Rule.
      */
     public static function in(array $values): static

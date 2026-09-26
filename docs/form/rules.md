@@ -107,7 +107,7 @@ Comparison rules compare `$value` directly:
 
 ## Membership and format rules
 
-- `Rule::in(string[] $values)` — strict membership (`in_array(..., true)`).
+- `Rule::in(array<bool|float|int|string> $values)` — strict membership (`in_array(..., true)`).
 - `Rule::equals(mixed $other)` — loose equality (`==`).
 - `Rule::regex(string $regex)` — regex match (`preg_match(...) === 1`).
 - `Rule::email()` — email validation (`FILTER_VALIDATE_EMAIL` + unicode flag).
