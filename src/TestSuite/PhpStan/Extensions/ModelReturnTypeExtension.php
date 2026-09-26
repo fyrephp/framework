@@ -27,6 +27,8 @@ abstract class ModelReturnTypeExtension
     protected array $modelNamespacesOverrides;
 
     /**
+     * Constructs a ModelReturnTypeExtension.
+     *
      * @param ReflectionProvider $reflectionProvider The reflection provider.
      * @param string[] $modelNamespaces The model namespaces.
      * @param array<array{classes: string[], modelNamespaces: string[]}> $modelNamespacesOverrides The model namespace overrides.

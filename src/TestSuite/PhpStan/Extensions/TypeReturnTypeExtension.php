@@ -18,6 +18,8 @@ abstract class TypeReturnTypeExtension
     protected TypeParser $typeParser;
 
     /**
+     * Constructs a TypeReturnTypeExtension.
+     *
      * @param array<string, class-string<DatabaseType>> $typeMap The custom type mappings.
      */
     public function __construct(array $typeMap = [])

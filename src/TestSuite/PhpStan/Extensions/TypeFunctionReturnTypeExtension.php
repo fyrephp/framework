@@ -44,7 +44,7 @@ class TypeFunctionReturnTypeExtension extends TypeReturnTypeExtension implements
             return new ObjectType(TypeParser::class);
         }
 
-        $type = $this->resolveType(TypeCombinator::removeNull($argumentType));
+        $type = TypeCombinator::removeNull($argumentType) |> $this->resolveType(...);
 
         if ($type !== null && !$argumentType->isNull()->no()) {
             return TypeCombinator::union($type, new ObjectType(TypeParser::class));

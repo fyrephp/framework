@@ -1242,39 +1242,8 @@ trait QueryTestTrait
         );
     }
 
-    public function testSaveManyOrFailOptions(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $items = $Items->newEntities([
-            [
-                'name' => 'failRules',
-            ],
-            [
-                'name' => 'failRules',
-            ],
-        ]);
-
-        $this->assertTrue(
-            $Items->saveManyOrFail($items, checkRules: false, clean: false)
-        );
-
-        $this->assertSame(
-            2,
-            $Items->find()->count()
-        );
-
-        $this->assertTrue(
-            $items[0]->isDirty()
-        );
-
-        $this->assertTrue(
-            $items[1]->isDirty()
-        );
-    }
-
     #[DataProvider('saveManyOrFailProvider')]
-    public function testSaveManyOrFailRollback(string $name): void
+    public function testSaveManyOrFailFailure(string $name): void
     {
         $Items = $this->modelRegistry->use('Items');
 
@@ -1333,6 +1302,37 @@ trait QueryTestTrait
 
         $this->assertFalse(
             $this->db->inTransaction()
+        );
+    }
+
+    public function testSaveManyOrFailOptions(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'failRules',
+            ],
+            [
+                'name' => 'failRules',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveManyOrFail($items, checkRules: false, clean: false)
+        );
+
+        $this->assertSame(
+            2,
+            $Items->find()->count()
+        );
+
+        $this->assertTrue(
+            $items[0]->isDirty()
+        );
+
+        $this->assertTrue(
+            $items[1]->isDirty()
         );
     }
 

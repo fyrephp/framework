@@ -47,7 +47,7 @@ class TypeParserUseReturnTypeExtension extends TypeReturnTypeExtension implement
             return null;
         }
 
-        return $this->resolveType($scope->getType($args[0]->value));
+        return $scope->getType($args[0]->value) |> $this->resolveType(...);
     }
 
     /**
