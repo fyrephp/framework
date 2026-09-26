@@ -11,6 +11,7 @@ use Fyre\DB\Pagination\CursorPage;
 use Fyre\DB\ValueBinder;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
+use Fyre\ORM\Exceptions\RecordNotFoundException;
 use Fyre\ORM\Model;
 use Fyre\ORM\Queries\Traits\ModelTrait;
 use Fyre\ORM\Relationship;
@@ -319,6 +320,27 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
         }
 
         return $this->limit(1)->getResult()->first();
+    }
+
+    /**
+     * Returns the first result or throws if no matching entity exists.
+     *
+     * @return TEntity The first result.
+     *
+     * @throws RecordNotFoundException If no matching entity exists.
+     */
+    public function firstOrFail(): Entity
+    {
+        $entity = $this->first();
+
+        if ($entity === null) {
+            throw new RecordNotFoundException(sprintf(
+                'No matching entity found for model `%s`.',
+                $this->model->getAlias()
+            ));
+        }
+
+        return $entity;
     }
 
     /**

@@ -66,6 +66,8 @@ The default error renderer follows `App.debug`. With debugging disabled or absen
 
 Registering `ErrorHandler` also converts non-suppressed PHP errors into `ErrorException` instances.
 
+`ErrorHandler` maps `Fyre\ORM\Exceptions\RecordNotFoundException` to an HTTP 404 status. Custom renderers still receive the original exception.
+
 See [Authentication](../auth/authentication.md), [Authorization](../auth/authorization.md), [Auth Middleware](../auth/middleware.md), [CORS](../security/cors.md), [CSRF](../security/csrf.md), [Content Security Policy](../security/csp.md), [Rate Limiting](../security/rate-limiting.md), [Router](../routing/router.md), and [Route Bindings](../routing/route-bindings.md) for feature-specific setup.
 
 ## Register aliases

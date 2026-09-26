@@ -13,6 +13,7 @@ use Fyre\Http\ClientResponse;
 use Fyre\Http\Exceptions\HttpException;
 use Fyre\Http\ResponseEmitter;
 use Fyre\Log\LogManager;
+use Fyre\ORM\Exceptions\RecordNotFoundException;
 use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
@@ -211,6 +212,7 @@ class ErrorHandler
      *
      * When the renderer returns a string, it is wrapped in a {@see ClientResponse} with a 500 status code.
      * When the exception is an {@see HttpException}, the response status code and headers are applied.
+     * A {@see RecordNotFoundException} produces a 404 response.
      *
      * @param Throwable $exception The exception.
      * @return ResponseInterface The Response instance.
@@ -254,6 +256,8 @@ class ErrorHandler
             foreach ($headers as $name => $value) {
                 $response = $response->withHeader($name, $value);
             }
+        } else if ($exception instanceof RecordNotFoundException) {
+            $response = $response->withStatus(404);
         }
 
         return $response;

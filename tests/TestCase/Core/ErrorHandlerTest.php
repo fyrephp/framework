@@ -27,6 +27,7 @@ use Fyre\Http\Exceptions\UnauthorizedException;
 use Fyre\Http\ResponseEmitter;
 use Fyre\Log\Handlers\ArrayLogger;
 use Fyre\Log\LogManager;
+use Fyre\ORM\Exceptions\RecordNotFoundException;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Throwable;
@@ -295,6 +296,17 @@ final class ErrorHandlerTest extends TestCase
 
         $this->assertSame(
             501,
+            $response->getStatusCode()
+        );
+    }
+
+    public function testRecordNotFound(): void
+    {
+        $exception = new RecordNotFoundException();
+        $response = $this->errorHandler->render($exception);
+
+        $this->assertSame(
+            404,
             $response->getStatusCode()
         );
     }

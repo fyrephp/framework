@@ -10,6 +10,7 @@ Use `deleteAll()` when you want a direct bulk delete without entities.
 - [Deleting entities](#deleting-entities)
   - [`delete()`](#delete)
   - [`deleteMany()`](#deletemany)
+  - [Throwing on failure](#throwing-on-failure)
 - [Cascading into relationships](#cascading-into-relationships)
 - [Bulk deletes with `deleteAll()`](#bulk-deletes-with-deleteall)
 - [Soft deletes with `SoftDeleteTrait`](#soft-deletes-with-softdeletetrait)
@@ -57,6 +58,19 @@ $entities = $Users->find()
 
 $Users->deleteMany($entities);
 ```
+
+### Throwing on failure
+
+`deleteOrFail()` and `deleteManyOrFail()` accept the same arguments as `delete()` and `deleteMany()`. They return `true` on success and throw `Fyre\ORM\Exceptions\PersistenceFailedException` when the corresponding method returns `false`.
+
+The exception extends `OrmException`. Its `getEntity()` method returns the entity that failed, including the specific failed entity in a batch.
+
+```php
+$Users->deleteOrFail($user);
+$Users->deleteManyOrFail($entities, cascade: false);
+```
+
+Cascades, events, soft deletes, and transaction rollback behave as they do for the original methods. Existing exceptions propagate unchanged. An empty iterable passed to `deleteManyOrFail()` succeeds.
 
 ## Cascading into relationships
 

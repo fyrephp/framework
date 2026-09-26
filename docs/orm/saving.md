@@ -15,6 +15,7 @@ For direct bulk updates without entities, use `updateAll()`.
 - [Saving entities](#saving-entities)
   - [Saving one entity](#saving-one-entity)
   - [Saving many entities](#saving-many-entities)
+  - [Throwing on failure](#throwing-on-failure)
   - [Saving related entities](#saving-related-entities)
   - [Primary key population](#primary-key-population)
   - [Rollback-aware field changes](#rollback-aware-field-changes)
@@ -148,6 +149,19 @@ $users = $Users->newEntities([
 
 $Users->saveMany($users);
 ```
+
+### Throwing on failure
+
+`saveOrFail()` and `saveManyOrFail()` accept the same arguments as `save()` and `saveMany()`. They return `true` on success and throw `Fyre\ORM\Exceptions\PersistenceFailedException` when the corresponding method returns `false`.
+
+The exception extends `OrmException`. Its `getEntity()` method returns the entity that failed, including the specific failed entity in a batch.
+
+```php
+$Users->saveOrFail($user);
+$Users->saveManyOrFail($users, saveRelated: false);
+```
+
+Validation, rule checks, callbacks, and transaction rollback behave as they do for the original methods. Existing exceptions propagate unchanged, and validation errors remain on the entities. An empty iterable passed to `saveManyOrFail()` succeeds.
 
 ### Saving related entities
 

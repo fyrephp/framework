@@ -38,6 +38,7 @@ The examples use a model instance named `$Users`; see [Models](models.md) for mo
 - `Model::find()` returns an ORM-aware `SelectQuery`.
 - `SelectQuery::all()` and `SelectQuery::getResult()` return a `Fyre\ORM\Result` that maps rows into entities.
 - `Model::get()` is a convenience method for primary-key lookups and returns `Entity|null`.
+- `SelectQuery::firstOrFail()` returns the first matching entity or throws a `RecordNotFoundException`.
 
 For the underlying query builder syntax (conditions, joins, ordering, grouping, and SQL compilation), see [Database queries](../database/queries.md). For entity field access and `_matchingData`, see [Entities](entities.md).
 
@@ -211,6 +212,16 @@ $membership = $Memberships->get([10, 25]);
 ```
 
 Every primary-key value is required. Missing, `null`, empty-string, or empty-array values throw an `OrmException`.
+
+Use `firstOrFail()` when a query must return an entity:
+
+```php
+$user = $Users->find()
+    ->where(['Users.email' => 'ada@example.com'])
+    ->firstOrFail();
+```
+
+It behaves like `first()`, including applying `LIMIT 1` when results have not already been loaded, but throws `Fyre\ORM\Exceptions\RecordNotFoundException` instead of returning `null`. This exception extends `OrmException` and produces a 404 response when handled by the HTTP error handler. Query execution errors propagate unchanged.
 
 ## Working with `Result`
 

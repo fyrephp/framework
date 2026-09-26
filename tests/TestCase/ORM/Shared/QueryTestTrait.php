@@ -5,6 +5,7 @@ namespace Tests\TestCase\ORM\Shared;
 
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\ORM\Entity;
+use Fyre\ORM\Exceptions\RecordNotFoundException;
 use Fyre\ORM\Queries\DeleteQuery;
 use Fyre\ORM\Queries\InsertQuery;
 use Fyre\ORM\Queries\SelectQuery;
@@ -322,6 +323,58 @@ trait QueryTestTrait
             ],
             $items->map(static fn(Entity $item): array => $item->toArray())->toArray()
         );
+    }
+
+    public function testFirstOrFail(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $item = $Items->find()
+            ->where(['Items.name' => 'Test 2'])
+            ->firstOrFail();
+
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
+
+        $this->assertSame(
+            $items[1]->id,
+            $item->id
+        );
+    }
+
+    public function testFirstOrFailMissing(): void
+    {
+        $this->expectException(RecordNotFoundException::class);
+        $this->expectExceptionMessageIs('No matching entity found for model `Items`.');
+
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $Items->find()
+            ->where(['Items.name' => 'Missing'])
+            ->firstOrFail();
     }
 
     public function testMacro(): void

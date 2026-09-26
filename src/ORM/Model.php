@@ -20,6 +20,7 @@ use Fyre\Event\Traits\EventDispatcherTrait;
 use Fyre\Form\Validator;
 use Fyre\ORM\Attributes\ModelAttribute;
 use Fyre\ORM\Exceptions\OrmException;
+use Fyre\ORM\Exceptions\PersistenceFailedException;
 use Fyre\ORM\Queries\DeleteQuery;
 use Fyre\ORM\Queries\InsertQuery;
 use Fyre\ORM\Queries\SelectQuery;
@@ -471,51 +472,66 @@ class Model implements EventListenerInterface
         bool $events = true,
         mixed ...$options
     ): bool {
-        if (!is_array($entities)) {
-            $entities = iterator_to_array($entities, false);
-        }
-
-        if ($entities === []) {
-            return true;
-        }
-
-        $this->checkEntities($entities);
-
         $options['cascade'] = $cascade;
         $options['events'] = $events;
 
-        $entities = array_values($entities);
+        return $this->performDeleteMany($entities, $options) === true;
+    }
 
-        if (count($entities) === 1) {
-            return $this->delete($entities[0], ...$options);
+    /**
+     * Deletes multiple entities or throws on failure.
+     *
+     * @param iterable<TEntity> $entities The entities.
+     * @param bool $cascade Whether to delete related children.
+     * @param bool $events Whether to trigger events.
+     * @param mixed ...$options The delete options.
+     * @return bool Whether the delete was successful.
+     *
+     * @throws PersistenceFailedException If the delete fails.
+     */
+    public function deleteManyOrFail(
+        array|Traversable $entities,
+        bool $cascade = true,
+        bool $events = true,
+        mixed ...$options
+    ): bool {
+        $options['cascade'] = $cascade;
+        $options['events'] = $events;
+
+        $result = $this->performDeleteMany($entities, $options);
+
+        if ($result !== true) {
+            throw new PersistenceFailedException(sprintf(
+                'Failed to delete entities for model `%s`.',
+                $this->getAlias()
+            ), $result);
         }
 
-        $connection = $this->getConnection();
+        return true;
+    }
 
-        $connection->begin();
-        $rollback = true;
-
-        try {
-            foreach ($entities as $entity) {
-                if (!$this->performDelete($entity, $options)) {
-                    return false;
-                }
-            }
-
-            if ($events) {
-                $connection->afterCommit(function() use ($entities, $options): void {
-                    foreach ($entities as $entity) {
-                        $this->dispatchEvent('ORM.afterDeleteCommit', ['entity' => $entity, 'options' => $options]);
-                    }
-                }, 100);
-            }
-
-            $connection->commit();
-            $rollback = false;
-        } finally {
-            if ($rollback) {
-                $connection->rollback();
-            }
+    /**
+     * Deletes an Entity or throws on failure.
+     *
+     * @param TEntity $entity The Entity.
+     * @param bool $cascade Whether to delete related children.
+     * @param bool $events Whether to trigger events.
+     * @param mixed ...$options The delete options.
+     * @return bool Whether the delete was successful.
+     *
+     * @throws PersistenceFailedException If the delete fails.
+     */
+    public function deleteOrFail(
+        Entity $entity,
+        bool $cascade = true,
+        bool $events = true,
+        mixed ...$options
+    ): bool {
+        if (!$this->delete($entity, $cascade, $events, ...$options)) {
+            throw new PersistenceFailedException(sprintf(
+                'Failed to delete entity for model `%s`.',
+                $this->getAlias()
+            ), $entity);
         }
 
         return true;
@@ -1336,71 +1352,84 @@ class Model implements EventListenerInterface
         bool $clean = true,
         mixed ...$options
     ): bool {
-        if (!is_array($entities)) {
-            $entities = iterator_to_array($entities, false);
-        }
-
-        if ($entities === []) {
-            return true;
-        }
-
-        $this->checkEntities($entities);
-
-        $entities = array_filter(
-            $entities,
-            static fn(Entity $entity): bool => $entity->isNew() || $entity->isDirty()
-        ) |> array_values(...);
-
-        if ($entities === []) {
-            return true;
-        }
-
         $options['saveRelated'] = $saveRelated;
         $options['checkRules'] = $checkRules;
         $options['checkExists'] = $checkExists;
         $options['events'] = $events;
         $options['clean'] = $clean;
 
-        if (count($entities) === 1) {
-            return $this->save($entities[0], ...$options);
+        return $this->performSaveMany($entities, $options) === true;
+    }
+
+    /**
+     * Saves multiple entities or throws on failure.
+     *
+     * @param iterable<TEntity> $entities The entities.
+     * @param bool $saveRelated Whether to save related entities.
+     * @param bool $checkRules Whether to check model RuleSet.
+     * @param bool $checkExists Whether to check if the entity exists.
+     * @param bool $events Whether to trigger events.
+     * @param bool $clean Whether to clean the entity.
+     * @param mixed ...$options The save options.
+     * @return bool Whether the save was successful.
+     *
+     * @throws PersistenceFailedException If the save fails.
+     */
+    public function saveManyOrFail(
+        array|Traversable $entities,
+        bool $saveRelated = true,
+        bool $checkRules = true,
+        bool $checkExists = true,
+        bool $events = true,
+        bool $clean = true,
+        mixed ...$options
+    ): bool {
+        $options['saveRelated'] = $saveRelated;
+        $options['checkRules'] = $checkRules;
+        $options['checkExists'] = $checkExists;
+        $options['events'] = $events;
+        $options['clean'] = $clean;
+
+        $result = $this->performSaveMany($entities, $options);
+
+        if ($result !== true) {
+            throw new PersistenceFailedException(sprintf(
+                'Failed to save entities for model `%s`.',
+                $this->getAlias()
+            ), $result);
         }
 
-        foreach ($entities as $entity) {
-            if ($entity->hasErrors()) {
-                return false;
-            }
-        }
+        return true;
+    }
 
-        if ($checkExists) {
-            $this->checkExists($entities);
-        }
-
-        $connection = $this->getConnection();
-
-        $connection->begin();
-        $rollback = true;
-
-        try {
-            foreach ($entities as $entity) {
-                if (!$this->performSave($entity, $options)) {
-                    return false;
-                }
-            }
-
-            if ($events) {
-                $connection->afterCommit(function() use ($entities, $options): void {
-                    foreach ($entities as $entity) {
-                        $this->dispatchEvent('ORM.afterSaveCommit', ['entity' => $entity, 'options' => $options]);
-                    }
-                }, 100);
-            }
-
-            $connection->commit();
-            $rollback = false;
-        } finally {
-            if ($rollback) {
-                $connection->rollback();
-            }
+    /**
+     * Saves an Entity or throws on failure.
+     *
+     * @param TEntity $entity The Entity.
+     * @param bool $saveRelated Whether to save related entities.
+     * @param bool $checkRules Whether to check model RuleSet.
+     * @param bool $checkExists Whether to check if the entity exists.
+     * @param bool $events Whether to trigger events.
+     * @param bool $clean Whether to clean the entity.
+     * @param mixed ...$options The save options.
+     * @return bool Whether the save was successful.
+     *
+     * @throws PersistenceFailedException If the save fails.
+     */
+    public function saveOrFail(
+        Entity $entity,
+        bool $saveRelated = true,
+        bool $checkRules = true,
+        bool $checkExists = true,
+        bool $events = true,
+        bool $clean = true,
+        mixed ...$options
+    ): bool {
+        if (!$this->save($entity, $saveRelated, $checkRules, $checkExists, $events, $clean, ...$options)) {
+            throw new PersistenceFailedException(sprintf(
+                'Failed to save entity for model `%s`.',
+                $this->getAlias()
+            ), $entity);
         }
 
         return true;
@@ -1996,6 +2025,66 @@ class Model implements EventListenerInterface
     }
 
     /**
+     * Deletes multiple entities and returns any failed Entity.
+     *
+     * @param iterable<TEntity> $entities The entities.
+     * @param array<mixed> $options The delete options.
+     * @return TEntity|true The failed Entity, or true on success.
+     */
+    protected function performDeleteMany(array|Traversable $entities, array $options): Entity|true
+    {
+        if (!is_array($entities)) {
+            $entities = iterator_to_array($entities, false);
+        }
+
+        if ($entities === []) {
+            return true;
+        }
+
+        $this->checkEntities($entities);
+
+        $entities = array_values($entities);
+
+        if (count($entities) === 1) {
+            if (!$this->delete($entities[0], ...$options)) {
+                return $entities[0];
+            }
+
+            return true;
+        }
+
+        $connection = $this->getConnection();
+
+        $connection->begin();
+        $rollback = true;
+
+        try {
+            foreach ($entities as $entity) {
+                if (!$this->performDelete($entity, $options)) {
+                    return $entity;
+                }
+            }
+
+            if ($options['events']) {
+                $connection->afterCommit(function() use ($entities, $options): void {
+                    foreach ($entities as $entity) {
+                        $this->dispatchEvent('ORM.afterDeleteCommit', ['entity' => $entity, 'options' => $options]);
+                    }
+                }, 100);
+            }
+
+            $connection->commit();
+            $rollback = false;
+        } finally {
+            if ($rollback) {
+                $connection->rollback();
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Saves a single Entity.
      *
      * @param TEntity $entity The Entity.
@@ -2115,6 +2204,83 @@ class Model implements EventListenerInterface
 
             if ($event->isPropagationStopped()) {
                 return (bool) $event->getResult();
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Saves multiple entities and returns any failed Entity.
+     *
+     * @param iterable<TEntity> $entities The entities.
+     * @param array<mixed> $options The save options.
+     * @return TEntity|true The failed Entity, or true on success.
+     */
+    protected function performSaveMany(array|Traversable $entities, array $options): Entity|true
+    {
+        if (!is_array($entities)) {
+            $entities = iterator_to_array($entities, false);
+        }
+
+        if ($entities === []) {
+            return true;
+        }
+
+        $this->checkEntities($entities);
+
+        $entities = array_filter(
+            $entities,
+            static fn(Entity $entity): bool => $entity->isNew() || $entity->isDirty()
+        ) |> array_values(...);
+
+        if ($entities === []) {
+            return true;
+        }
+
+        if (count($entities) === 1) {
+            if (!$this->save($entities[0], ...$options)) {
+                return $entities[0];
+            }
+
+            return true;
+        }
+
+        foreach ($entities as $entity) {
+            if ($entity->hasErrors()) {
+                return $entity;
+            }
+        }
+
+        if ($options['checkExists']) {
+            $this->checkExists($entities);
+        }
+
+        $connection = $this->getConnection();
+
+        $connection->begin();
+        $rollback = true;
+
+        try {
+            foreach ($entities as $entity) {
+                if (!$this->performSave($entity, $options)) {
+                    return $entity;
+                }
+            }
+
+            if ($options['events']) {
+                $connection->afterCommit(function() use ($entities, $options): void {
+                    foreach ($entities as $entity) {
+                        $this->dispatchEvent('ORM.afterSaveCommit', ['entity' => $entity, 'options' => $options]);
+                    }
+                }, 100);
+            }
+
+            $connection->commit();
+            $rollback = false;
+        } finally {
+            if ($rollback) {
+                $connection->rollback();
             }
         }
 

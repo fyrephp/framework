@@ -8,7 +8,10 @@ use Fyre\DB\Query;
 use Fyre\Event\Event;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
+use Fyre\ORM\Exceptions\PersistenceFailedException;
 use Generator;
+use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\Mock\Entities\Item;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\User;
@@ -18,6 +21,17 @@ use function range;
 
 trait QueryTestTrait
 {
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function saveManyOrFailProvider(): array
+    {
+        return [
+            'afterSave' => ['failAfterSave'],
+            'validation' => [''],
+        ];
+    }
+
     public function testDelete(): void
     {
         $Items = $this->modelRegistry->use('Items');
@@ -378,6 +392,142 @@ trait QueryTestTrait
         }
     }
 
+    public function testDeleteManyOrFail(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $this->assertTrue(
+            $Items->deleteManyOrFail($items)
+        );
+
+        $this->assertSame(
+            0,
+            $Items->find()->count()
+        );
+    }
+
+    public function testDeleteManyOrFailOptions(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'failBeforeDelete',
+            ],
+            [
+                'name' => 'failAfterDelete',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $this->assertTrue(
+            $Items->deleteManyOrFail($items, events: false)
+        );
+
+        $this->assertSame(
+            0,
+            $Items->find()->count()
+        );
+    }
+
+    public function testDeleteManyOrFailRollback(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test',
+            ],
+            [
+                'name' => 'failAfterDelete',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $caught = null;
+
+        try {
+            $Items->deleteManyOrFail($items);
+        } catch (PersistenceFailedException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            PersistenceFailedException::class,
+            $caught
+        );
+
+        $this->assertSame(
+            $items[1],
+            $caught->getEntity()
+        );
+
+        $this->assertSame(
+            'Failed to delete entities for model `Items`.',
+            $caught->getMessage()
+        );
+
+        $this->assertSame(
+            2,
+            $Items->find()->count()
+        );
+
+        $this->assertFalse(
+            $this->db->inTransaction()
+        );
+    }
+
+    public function testDeleteManyOrFailSingle(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'id' => 999,
+            'name' => 'Test',
+        ]);
+
+        $caught = null;
+
+        try {
+            $Items->deleteManyOrFail([$item]);
+        } catch (PersistenceFailedException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            PersistenceFailedException::class,
+            $caught
+        );
+
+        $this->assertSame(
+            $item,
+            $caught->getEntity()
+        );
+
+        $this->assertFalse(
+            $this->db->inTransaction()
+        );
+    }
+
     public function testDeleteNonDependentForeignKeys(): void
     {
         $this->db->enableForeignKeys();
@@ -417,6 +567,95 @@ trait QueryTestTrait
         );
         $this->assertNull(
             $child->get('cascade_parent_id')
+        );
+    }
+
+    public function testDeleteOrFail(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $this->assertTrue(
+            $Items->deleteOrFail($item)
+        );
+
+        $this->assertSame(
+            0,
+            $Items->find()->count()
+        );
+    }
+
+    public function testDeleteOrFailOptions(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'name' => 'failBeforeDelete',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $this->assertTrue(
+            $Items->deleteOrFail($item, events: false)
+        );
+
+        $this->assertSame(
+            0,
+            $Items->find()->count()
+        );
+    }
+
+    public function testDeleteOrFailRollback(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'name' => 'failAfterDelete',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $caught = null;
+
+        try {
+            $Items->deleteOrFail($item);
+        } catch (PersistenceFailedException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            PersistenceFailedException::class,
+            $caught
+        );
+
+        $this->assertSame(
+            $item,
+            $caught->getEntity()
+        );
+
+        $this->assertSame(
+            'Failed to delete entity for model `Items`.',
+            $caught->getMessage()
+        );
+
+        $this->assertSame(
+            1,
+            $Items->find()->count()
+        );
+
+        $this->assertFalse(
+            $this->db->inTransaction()
         );
     }
 
@@ -926,6 +1165,304 @@ trait QueryTestTrait
                 $Items->exists(['name' => 'Test '.$key])
             );
         }
+    }
+
+    public function testSaveManyOrFail(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveManyOrFail($items)
+        );
+
+        $this->assertSame(
+            2,
+            $Items->find()->count()
+        );
+
+        $this->assertFalse(
+            $items[0]->isNew()
+        );
+
+        $this->assertFalse(
+            $items[1]->isNew()
+        );
+    }
+
+    public function testSaveManyOrFailAfterFilteringCleanEntity(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $unchanged = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($unchanged)
+        );
+
+        $item = $Items->newEntity([
+            'name' => '',
+        ]);
+
+        $caught = null;
+
+        try {
+            $Items->saveManyOrFail([$unchanged, $item]);
+        } catch (PersistenceFailedException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            PersistenceFailedException::class,
+            $caught
+        );
+
+        $this->assertSame(
+            $item,
+            $caught->getEntity()
+        );
+
+        $this->assertSame(
+            1,
+            $Items->find()->count()
+        );
+
+        $this->assertFalse(
+            $this->db->inTransaction()
+        );
+    }
+
+    public function testSaveManyOrFailOptions(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'failRules',
+            ],
+            [
+                'name' => 'failRules',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveManyOrFail($items, checkRules: false, clean: false)
+        );
+
+        $this->assertSame(
+            2,
+            $Items->find()->count()
+        );
+
+        $this->assertTrue(
+            $items[0]->isDirty()
+        );
+
+        $this->assertTrue(
+            $items[1]->isDirty()
+        );
+    }
+
+    #[DataProvider('saveManyOrFailProvider')]
+    public function testSaveManyOrFailRollback(string $name): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test',
+            ],
+            [
+                'name' => $name,
+            ],
+        ]);
+
+        $caught = null;
+
+        try {
+            $Items->saveManyOrFail($items);
+        } catch (PersistenceFailedException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            PersistenceFailedException::class,
+            $caught
+        );
+
+        $this->assertSame(
+            $items[1],
+            $caught->getEntity()
+        );
+
+        $this->assertSame(
+            'Failed to save entities for model `Items`.',
+            $caught->getMessage()
+        );
+
+        $this->assertSame(
+            0,
+            $Items->find()->count()
+        );
+
+        $this->assertNull(
+            $items[0]->id
+        );
+
+        $this->assertNull(
+            $items[1]->id
+        );
+
+        $this->assertTrue(
+            $items[0]->isNew()
+        );
+
+        $this->assertTrue(
+            $items[1]->isNew()
+        );
+
+        $this->assertFalse(
+            $this->db->inTransaction()
+        );
+    }
+
+    public function testSaveOrFail(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->assertTrue(
+            $Items->saveOrFail($item)
+        );
+
+        $this->assertSame(
+            1,
+            $Items->find()->count()
+        );
+
+        $this->assertFalse(
+            $item->isNew()
+        );
+
+        $this->assertFalse(
+            $item->isDirty()
+        );
+    }
+
+    public function testSaveOrFailException(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $exception = new RuntimeException('Save callback failed.');
+
+        $Items->getEventManager()->on('ORM.beforeSave', static function() use ($exception): void {
+            throw $exception;
+        });
+
+        $caught = null;
+
+        try {
+            $Items->saveOrFail($item);
+        } catch (RuntimeException $e) {
+            $caught = $e;
+        }
+
+        $this->assertSame(
+            $exception,
+            $caught
+        );
+
+        $this->assertFalse(
+            $this->db->inTransaction()
+        );
+    }
+
+    public function testSaveOrFailOptions(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'name' => 'failRules',
+        ]);
+
+        $this->assertTrue(
+            $Items->saveOrFail($item, checkRules: false, clean: false)
+        );
+
+        $this->assertSame(
+            1,
+            $Items->find()->count()
+        );
+
+        $this->assertTrue(
+            $item->isDirty()
+        );
+    }
+
+    public function testSaveOrFailRollback(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'name' => 'failAfterSave',
+        ]);
+
+        $caught = null;
+
+        try {
+            $Items->saveOrFail($item);
+        } catch (PersistenceFailedException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            PersistenceFailedException::class,
+            $caught
+        );
+
+        $this->assertSame(
+            $item,
+            $caught->getEntity()
+        );
+
+        $this->assertSame(
+            'Failed to save entity for model `Items`.',
+            $caught->getMessage()
+        );
+
+        $this->assertSame(
+            0,
+            $Items->find()->count()
+        );
+
+        $this->assertNull(
+            $item->id
+        );
+
+        $this->assertTrue(
+            $item->isNew()
+        );
+
+        $this->assertFalse(
+            $this->db->inTransaction()
+        );
     }
 
     public function testUpdate(): void
