@@ -262,7 +262,7 @@ class EntitySourceBuilder
             $type = match (true) {
                 $columnType instanceof BooleanType => 'bool',
                 $columnType instanceof IntegerType => 'int',
-                $columnType instanceof DecimalType => 'string',
+                $columnType instanceof DecimalType => 'numeric-string',
                 $columnType instanceof FloatType => 'float',
                 $columnType instanceof DateTimeType => new ReflectionClass($columnType->getValueClass())->getShortName(),
                 $columnType instanceof BinaryType => 'resource',
