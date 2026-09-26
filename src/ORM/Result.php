@@ -18,8 +18,10 @@ use JsonSerializable;
 use Override;
 use Stringable;
 
+use function array_any;
 use function array_first;
 use function array_merge;
+use function array_reverse;
 use function assert;
 use function count;
 use function explode;
@@ -370,6 +372,35 @@ class Result implements Countable, IteratorAggregate, JsonSerializable, Stringab
                     $value;
             } else {
                 $pointer[$column] = $type->fromDatabase($value);
+            }
+        }
+
+        // Normalize nested joins before their parents.
+        $reverseMap = array_reverse($aliasMap);
+
+        foreach ($reverseMap as $alias) {
+            if ($alias['properties'] === []) {
+                continue;
+            }
+
+            $pointer = &$data;
+            $pathExists = true;
+
+            foreach ($alias['properties'] as $property) {
+                if (!isset($pointer[$property])) {
+                    $pathExists = false;
+                    break;
+                }
+
+                $pointer = &$pointer[$property];
+            }
+
+            if (!$pathExists) {
+                continue;
+            }
+
+            if (!array_any($pointer, static fn(mixed $value): bool => $value !== null && $value !== [])) {
+                $pointer = null;
             }
         }
 

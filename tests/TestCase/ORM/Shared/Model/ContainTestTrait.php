@@ -268,6 +268,42 @@ trait ContainTestTrait
         );
     }
 
+    public function testContainFindBelongsToMissing(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+        $post = $Posts->newEntity(['title' => 'Test']);
+
+        $this->assertTrue($Posts->save($post));
+
+        $post = $Posts->get($post->id, contain: ['Users']);
+
+        $this->assertNull($post->user);
+    }
+
+    public function testContainFindHasOneMissing(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEntity(['name' => 'Test']);
+
+        $this->assertTrue($Users->save($user));
+
+        $user = $Users->get($user->id, contain: ['Addresses']);
+
+        $this->assertNull($user->address);
+    }
+
+    public function testContainFindNestedBelongsToMissing(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+        $post = $Posts->newEntity(['title' => 'Test']);
+
+        $this->assertTrue($Posts->save($post));
+
+        $post = $Posts->get($post->id, contain: ['Users.Addresses']);
+
+        $this->assertNull($post->user);
+    }
+
     public function testContainFindOptions(): void
     {
         $Users = $this->modelRegistry->use('Users');
