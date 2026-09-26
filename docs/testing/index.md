@@ -25,7 +25,7 @@ The base test case, assertion traits, and constraints use PHPUnit. Add it to you
 composer require --dev phpunit/phpunit:^13
 ```
 
-The PHPStan extension and PHP-CS-Fixer config are separate opt-in integrations. Install the matching tool only when you use that integration:
+The PHPStan extensions and PHP-CS-Fixer config are separate opt-in integrations. Install the matching tool only when you use that integration:
 
 ```bash
 composer require --dev phpstan/phpstan:^2.1
@@ -33,6 +33,22 @@ composer require --dev friendsofphp/php-cs-fixer:^3.91
 ```
 
 These packages are development dependencies of FyreFramework itself, but Composer does not install a dependency's `require-dev` packages for consumers.
+
+Register the model return type extensions in your PHPStan configuration to infer concrete model classes from `model('Users')` and `ModelRegistry::use('Users')`:
+
+```neon
+services:
+    -
+        class: Fyre\TestSuite\PhpStan\Extensions\ModelFunctionReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicFunctionReturnTypeExtension
+    -
+        class: Fyre\TestSuite\PhpStan\Extensions\ModelRegistryUseReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicMethodReturnTypeExtension
+```
+
+Both extensions default to the `App\Models` namespace. Configure their `modelNamespaces` argument for other namespaces, or `modelNamespacesOverrides` for per-class overrides. Unknown aliases and non-constant strings fall back to `Fyre\ORM\Model`.
 
 ## Testing overview
 

@@ -1,5 +1,18 @@
 services:
     -
+        class: Fyre\TestSuite\PhpStan\Extensions\ModelFunctionReturnTypeExtension
+        arguments:
+            modelNamespaces:
+                - Tests\Mock\Models\ORM
+            modelNamespacesOverrides:
+                -
+                    classes:
+                        - Tests\Mock\PhpStan\ModelFunctionOverride
+                    modelNamespaces:
+                        - Tests\Mock\Models
+        tags:
+            - phpstan.broker.dynamicFunctionReturnTypeExtension
+    -
         class: Fyre\TestSuite\PhpStan\Extensions\ModelRegistryUseReturnTypeExtension
         arguments:
             modelNamespaces:
