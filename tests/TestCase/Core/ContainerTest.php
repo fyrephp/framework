@@ -66,25 +66,101 @@ final class ContainerTest extends TestCase
         $callback = static fn(): string => 'test';
 
         return [
-            'array' => [static fn(array $value): array => $value, ['argument' => [1, 2]], [1, 2]],
-            'bool' => [static fn(bool $value): bool => $value, ['argument' => false], false],
-            'callable' => [static fn(callable $value): callable => $value, ['argument' => $callback], $callback],
-            'false' => [static fn(false $value): false => $value, ['argument' => false], false],
-            'float' => [static fn(float $value): float => $value, ['argument' => 1.5], 1.5],
-            'floatInteger' => [static fn(float $value): float => $value, ['argument' => 1], 1.0],
-            'int' => [static fn(int $value): int => $value, ['invalid' => '2', 'argument' => 2], 2],
-            'intersection' => [static fn(Countable&IteratorAggregate $value): mixed => $value, ['partial' => $partial, 'argument' => $collection], $collection],
-            'iterableArray' => [static fn(iterable $value): iterable => $value, ['argument' => [1, 2]], [1, 2]],
-            'iterableObject' => [static fn(iterable $value): iterable => $value, ['argument' => $collection], $collection],
-            'mixed' => [static fn(mixed $value): mixed => $value, ['argument' => $item], $item],
-            'null' => [static fn(null $value): null => $value, ['argument' => null], null],
-            'nullable' => [static fn(Item|null $value): Item|null => $value, ['argument' => null], null],
-            'object' => [static fn(object $value): object => $value, ['argument' => $item], $item],
-            'string' => [static fn(string $value): string => $value, ['invalid' => 2, 'argument' => 'test'], 'test'],
-            'true' => [static fn(true $value): true => $value, ['argument' => true], true],
-            'unionIntersection' => [static fn((Countable&IteratorAggregate)|Item $value): mixed => $value, ['partial' => $partial, 'argument' => $collection], $collection],
-            'unionObject' => [static fn((Countable&IteratorAggregate)|Item $value): mixed => $value, ['argument' => $item], $item],
-            'unionScalar' => [static fn(Item|string $value): Item|string => $value, ['argument' => 'test'], 'test'],
+            'array' => [
+                static fn(array $value): array => $value,
+                ['argument' => [1, 2]],
+                [1, 2],
+            ],
+            'bool' => [
+                static fn(bool $value): bool => $value,
+                ['argument' => false],
+                false,
+            ],
+            'callable' => [
+                static fn(callable $value): callable => $value,
+                ['argument' => $callback],
+                $callback,
+            ],
+            'false' => [
+                static fn(false $value): false => $value,
+                ['argument' => false],
+                false,
+            ],
+            'float' => [
+                static fn(float $value): float => $value,
+                ['argument' => 1.5],
+                1.5,
+            ],
+            'floatInteger' => [
+                static fn(float $value): float => $value,
+                ['argument' => 1],
+                1.0,
+            ],
+            'int' => [
+                static fn(int $value): int => $value,
+                ['invalid' => '2', 'argument' => 2],
+                2,
+            ],
+            'intersection' => [
+                static fn(Countable&IteratorAggregate $value): mixed => $value,
+                ['partial' => $partial, 'argument' => $collection],
+                $collection,
+            ],
+            'iterableArray' => [
+                static fn(iterable $value): iterable => $value,
+                ['argument' => [1, 2]],
+                [1, 2],
+            ],
+            'iterableObject' => [
+                static fn(iterable $value): iterable => $value,
+                ['argument' => $collection],
+                $collection,
+            ],
+            'mixed' => [
+                static fn(mixed $value): mixed => $value,
+                ['argument' => $item],
+                $item,
+            ],
+            'null' => [
+                static fn(null $value): null => $value,
+                ['argument' => null],
+                null,
+            ],
+            'nullable' => [
+                static fn(Item|null $value): Item|null => $value,
+                ['argument' => null],
+                null,
+            ],
+            'object' => [
+                static fn(object $value): object => $value,
+                ['argument' => $item],
+                $item,
+            ],
+            'string' => [
+                static fn(string $value): string => $value,
+                ['invalid' => 2, 'argument' => 'test'],
+                'test',
+            ],
+            'true' => [
+                static fn(true $value): true => $value,
+                ['argument' => true],
+                true,
+            ],
+            'unionIntersection' => [
+                static fn((Countable&IteratorAggregate)|Item $value): mixed => $value,
+                ['partial' => $partial, 'argument' => $collection],
+                $collection,
+            ],
+            'unionObject' => [
+                static fn((Countable&IteratorAggregate)|Item $value): mixed => $value,
+                ['argument' => $item],
+                $item,
+            ],
+            'unionScalar' => [
+                static fn(Item|string $value): Item|string => $value,
+                ['argument' => 'test'],
+                'test',
+            ],
         ];
     }
 
