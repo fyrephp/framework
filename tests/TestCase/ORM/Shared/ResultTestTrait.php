@@ -144,11 +144,6 @@ trait ResultTestTrait
             $item
         );
 
-        $this->assertInstanceOf(
-            Item::class,
-            $item
-        );
-
         $this->assertSame(
             'Items',
             $item->getModelAlias()

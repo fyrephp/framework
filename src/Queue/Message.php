@@ -198,6 +198,8 @@ class Message
      * Note: This method increments the retry attempt counter.
      *
      * @return bool Whether the message should be retried.
+     *
+     * @phpstan-impure
      */
     public function shouldRetry(): bool
     {

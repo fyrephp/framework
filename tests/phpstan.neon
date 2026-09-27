@@ -13,6 +13,11 @@ parameters:
         - Mock
         - TestCase
         - bootstrap.php
+    excludePaths:
+        analyse:
+            # These fixtures are analysed by TypeInferenceTestCase with custom type mappings.
+            - Mock/PhpStan/TypeFunction.php
+            - Mock/PhpStan/TypeParserUse.php
 
 services:
     -

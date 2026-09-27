@@ -14,6 +14,8 @@ trait BinaryTestTrait
     {
         $handle = $this->type->use('binary')->fromDatabase('test');
 
+        $this->assertIsResource($handle);
+
         $this->assertSame(
             'test',
             fread($handle, 1024)

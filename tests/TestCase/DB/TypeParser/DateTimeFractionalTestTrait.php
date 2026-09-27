@@ -12,7 +12,7 @@ trait DateTimeFractionalTestTrait
     {
         $this->assertSame(
             '2021-12-31T22:59:11.123+00:00',
-            $this->type->use('datetime-fractional')->fromDatabase('2021-12-31 22:59:11.12345')->toIsoString()
+            $this->type->use('datetime-fractional')->fromDatabase('2021-12-31 22:59:11.12345')?->toIsoString()
         );
     }
 
@@ -47,7 +47,7 @@ trait DateTimeFractionalTestTrait
     {
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime-fractional')->fromDatabase(1640991551)->toIsoString()
+            $this->type->use('datetime-fractional')->fromDatabase(1640991551)?->toIsoString()
         );
     }
 
@@ -157,7 +157,7 @@ trait DateTimeFractionalTestTrait
 
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime-fractional')->parse($date)->toIsoString()
+            $this->type->use('datetime-fractional')->parse($date)?->toIsoString()
         );
     }
 
@@ -172,7 +172,7 @@ trait DateTimeFractionalTestTrait
     {
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime-fractional')->parse(1640991551)->toIsoString()
+            $this->type->use('datetime-fractional')->parse(1640991551)?->toIsoString()
         );
     }
 

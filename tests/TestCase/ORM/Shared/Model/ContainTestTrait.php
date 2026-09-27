@@ -280,7 +280,11 @@ trait ContainTestTrait
             $Posts->save($post)
         );
 
+        $this->assertNotNull($post->id);
+
         $post = $Posts->get($post->id, contain: ['Users']);
+
+        $this->assertInstanceOf(Post::class, $post);
 
         $this->assertNull(
             $post->user
@@ -299,7 +303,11 @@ trait ContainTestTrait
             $Users->save($user)
         );
 
+        $this->assertNotNull($user->id);
+
         $user = $Users->get($user->id, contain: ['Addresses']);
+
+        $this->assertInstanceOf(User::class, $user);
 
         $this->assertNull(
             $user->address
@@ -318,7 +326,11 @@ trait ContainTestTrait
             $Posts->save($post)
         );
 
+        $this->assertNotNull($post->id);
+
         $post = $Posts->get($post->id, contain: ['Users.Addresses']);
+
+        $this->assertInstanceOf(Post::class, $post);
 
         $this->assertNull(
             $post->user

@@ -28,7 +28,7 @@ trait DateTimeTestTrait
     {
         $this->assertSame(
             $expected,
-            $this->type->use('datetime')->fromDatabase($value)->toIsoString()
+            $this->type->use('datetime')->fromDatabase($value)?->toIsoString()
         );
     }
 
@@ -184,7 +184,7 @@ trait DateTimeTestTrait
 
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime')->parse($date)->toIsoString()
+            $this->type->use('datetime')->parse($date)?->toIsoString()
         );
     }
 
@@ -206,7 +206,7 @@ trait DateTimeTestTrait
     {
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime')->parse(1640991551)->toIsoString()
+            $this->type->use('datetime')->parse(1640991551)?->toIsoString()
         );
     }
 

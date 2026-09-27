@@ -234,7 +234,7 @@ trait TransactionTestTrait
 
         $this->db->rollback();
 
-        $this->assertSame(
+        $this->assertEquals(
             0,
             $test
         );
@@ -242,7 +242,7 @@ trait TransactionTestTrait
         $this->db->begin();
         $this->db->commit();
 
-        $this->assertSame(
+        $this->assertEquals(
             0,
             $test
         );
@@ -308,14 +308,14 @@ trait TransactionTestTrait
             $levels[] = $this->db->getSavePointLevel();
         });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $levels
         );
 
         $this->db->rollback();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [0],
             $levels
         );
@@ -323,7 +323,7 @@ trait TransactionTestTrait
         $this->db->begin();
         $this->db->rollback();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [0],
             $levels
         );
@@ -420,14 +420,14 @@ trait TransactionTestTrait
 
         $this->db->commit();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $calls
         );
 
         $this->db->rollback();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['deep', 'inner'],
             $calls
         );
@@ -436,7 +436,7 @@ trait TransactionTestTrait
         $this->db->begin();
         $this->db->rollback();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['deep', 'inner'],
             $calls
         );

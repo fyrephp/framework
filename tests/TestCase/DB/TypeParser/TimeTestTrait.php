@@ -28,7 +28,7 @@ trait TimeTestTrait
     {
         $this->assertSame(
             $expected,
-            $this->type->use('time')->fromDatabase($value)->toIsoString()
+            $this->type->use('time')->fromDatabase($value)?->toIsoString()
         );
     }
 
@@ -181,7 +181,7 @@ trait TimeTestTrait
 
         $this->assertSame(
             '22:59:11',
-            $this->type->use('time')->parse($time)->toIsoString()
+            $this->type->use('time')->parse($time)?->toIsoString()
         );
     }
 
@@ -206,7 +206,7 @@ trait TimeTestTrait
     {
         $this->assertSame(
             '22:59:11',
-            $this->type->use('time')->parse(1640991551)->toIsoString()
+            $this->type->use('time')->parse(1640991551)?->toIsoString()
         );
     }
 

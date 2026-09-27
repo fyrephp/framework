@@ -327,8 +327,8 @@ final class AsyncPromiseTest extends TestCase
         });
 
         try {
-            $this->assertSame('1', socket_read($parentSocket, 1));
-            $this->assertSame('1', socket_read($parentSocket, 1));
+            $this->assertEquals('1', socket_read($parentSocket, 1));
+            $this->assertEquals('1', socket_read($parentSocket, 1));
 
             socket_write($parentSocket, '11');
 

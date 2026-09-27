@@ -14,7 +14,7 @@ trait DateTestTrait
     {
         $this->assertSame(
             '2021-12-31',
-            $this->type->use('date')->fromDatabase('2021-12-31')->toIsoString()
+            $this->type->use('date')->fromDatabase('2021-12-31')?->toIsoString()
         );
     }
 
@@ -49,7 +49,7 @@ trait DateTestTrait
     {
         $this->assertSame(
             '2021-12-31',
-            $this->type->use('date')->fromDatabase(1640991551)->toIsoString()
+            $this->type->use('date')->fromDatabase(1640991551)?->toIsoString()
         );
     }
 
@@ -178,7 +178,7 @@ trait DateTestTrait
 
         $this->assertSame(
             '2021-12-31',
-            $this->type->use('date')->parse($date)->toIsoString()
+            $this->type->use('date')->parse($date)?->toIsoString()
         );
     }
 
@@ -200,7 +200,7 @@ trait DateTestTrait
     {
         $this->assertSame(
             '2021-12-31',
-            $this->type->use('date')->parse(1640991551)->toIsoString()
+            $this->type->use('date')->parse(1640991551)?->toIsoString()
         );
     }
 

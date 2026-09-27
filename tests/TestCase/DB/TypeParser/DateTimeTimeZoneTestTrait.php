@@ -12,7 +12,7 @@ trait DateTimeTimeZoneTestTrait
     {
         $this->assertSame(
             '2021-12-31T12:59:11.123+00:00',
-            $this->type->use('datetime-timezone')->fromDatabase('2021-12-31 22:59:11.12345+10')->toIsoString()
+            $this->type->use('datetime-timezone')->fromDatabase('2021-12-31 22:59:11.12345+10')?->toIsoString()
         );
     }
 
@@ -47,7 +47,7 @@ trait DateTimeTimeZoneTestTrait
     {
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime-timezone')->fromDatabase(1640991551)->toIsoString()
+            $this->type->use('datetime-timezone')->fromDatabase(1640991551)?->toIsoString()
         );
     }
 
@@ -157,7 +157,7 @@ trait DateTimeTimeZoneTestTrait
 
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime-timezone')->parse($date)->toIsoString()
+            $this->type->use('datetime-timezone')->parse($date)?->toIsoString()
         );
     }
 
@@ -172,7 +172,7 @@ trait DateTimeTimeZoneTestTrait
     {
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime-timezone')->parse(1640991551)->toIsoString()
+            $this->type->use('datetime-timezone')->parse(1640991551)?->toIsoString()
         );
     }
 

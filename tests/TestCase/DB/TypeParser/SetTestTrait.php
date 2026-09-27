@@ -24,17 +24,25 @@ trait SetTestTrait
 
     public function testSetParse(): void
     {
+        $result = $this->type->use('set')->parse('a,b,c');
+
+        $this->assertIsArray($result);
+
         $this->assertArraysAreIdentical(
             ['a', 'b', 'c'],
-            $this->type->use('set')->parse('a,b,c')
+            $result
         );
     }
 
     public function testSetParseArray(): void
     {
+        $result = $this->type->use('set')->parse(['a', 'b', 'c']);
+
+        $this->assertIsArray($result);
+
         $this->assertArraysAreIdentical(
             ['a', 'b', 'c'],
-            $this->type->use('set')->parse(['a', 'b', 'c'])
+            $result
         );
     }
 
