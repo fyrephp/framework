@@ -13,10 +13,16 @@ use Psr\Container\ContainerInterface;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionFunction;
+use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter;
+use ReflectionType;
+use ReflectionUnionType;
 
+use function array_all;
+use function array_any;
+use function array_find_key;
 use function array_key_exists;
 use function array_key_last;
 use function array_keys;
@@ -30,11 +36,14 @@ use function array_values;
 use function assert;
 use function class_exists;
 use function explode;
+use function get_debug_type;
 use function implode;
 use function in_array;
 use function is_array;
 use function is_callable;
+use function is_float;
 use function is_int;
+use function is_iterable;
 use function is_object;
 use function is_string;
 use function method_exists;
@@ -547,8 +556,8 @@ class Container implements ContainerInterface
     /**
      * Resolves dependencies from parameters.
      *
-     * Named arguments (matching parameter names) are applied first. Any remaining arguments are
-     * appended and passed positionally.
+     * Named and positional arguments take precedence over contextual attributes. Unmatched named
+     * arguments are matched by type in provided order before autowiring. Any remaining arguments are appended positionally.
      *
      * @param ReflectionParameter[] $parameters The function parameters.
      * @param array<mixed> $arguments The provided arguments.
@@ -560,13 +569,22 @@ class Container implements ContainerInterface
     {
         $dependencies = [];
         $positionalArguments = [];
+        $unmatchedArguments = [];
+
+        $paramNames = array_map(
+            static fn(ReflectionParameter $parameter): string => $parameter->getName(),
+            $parameters
+        );
 
         foreach ($arguments as $key => $argument) {
-            if (!is_int($key)) {
+            if (is_int($key)) {
+                $positionalArguments[] = $argument;
+            } else if (!in_array($key, $paramNames, true)) {
+                $unmatchedArguments[$key] = $argument;
+            } else {
                 continue;
             }
 
-            $positionalArguments[] = $argument;
             unset($arguments[$key]);
         }
 
@@ -605,21 +623,23 @@ class Container implements ContainerInterface
             $paramType = $parameter->getType();
             $e = null;
 
+            if ($paramType !== null) {
+                $matchedKey = array_find_key(
+                    $unmatchedArguments,
+                    static fn(mixed $argument): bool => static::matchesType($argument, $paramType, $parameter->getDeclaringClass())
+                );
+
+                if ($matchedKey !== null) {
+                    $dependencies[] = $unmatchedArguments[$matchedKey];
+                    unset($unmatchedArguments[$matchedKey]);
+
+                    continue;
+                }
+            }
+
             if ($paramType instanceof ReflectionNamedType && !$paramType->isBuiltin()) {
                 try {
-                    $typeName = $paramType->getName();
-
-                    $declaringClass = $parameter->getDeclaringClass();
-
-                    $className = match ($typeName) {
-                        'parent' => $declaringClass?->getParentClass() ?: null,
-                        'self' => $declaringClass,
-                        default => $typeName
-                    };
-
-                    if ($className instanceof ReflectionClass) {
-                        $className = $className->getName();
-                    }
+                    $className = static::resolveClassName($paramType->getName(), $parameter->getDeclaringClass());
 
                     if (!$className) {
                         throw new ContainerException(sprintf(
@@ -662,8 +682,80 @@ class Container implements ContainerInterface
             }
         }
 
-        $arguments = array_merge($positionalArguments, array_values($arguments));
+        $arguments = array_merge($positionalArguments, array_values($unmatchedArguments));
 
         return array_merge($dependencies, $arguments);
+    }
+
+    /**
+     * Checks whether a supplied argument matches a parameter type.
+     *
+     * @param mixed $value The supplied argument.
+     * @param ReflectionType $type The parameter type.
+     * @param ReflectionClass<object>|null $declaringClass The class declaring the parameter.
+     * @return bool Whether the argument matches the type.
+     */
+    protected static function matchesType(mixed $value, ReflectionType $type, ReflectionClass|null $declaringClass): bool
+    {
+        if ($value === null) {
+            return $type->allowsNull();
+        }
+
+        if ($type instanceof ReflectionUnionType) {
+            return array_any(
+                $type->getTypes(),
+                static fn(ReflectionType $member): bool => static::matchesType($value, $member, $declaringClass)
+            );
+        }
+
+        if ($type instanceof ReflectionIntersectionType) {
+            return array_all(
+                $type->getTypes(),
+                static fn(ReflectionType $member): bool => static::matchesType($value, $member, $declaringClass)
+            );
+        }
+
+        if (!($type instanceof ReflectionNamedType)) {
+            return false;
+        }
+
+        if ($type->isBuiltin()) {
+            return match ($type->getName()) {
+                'callable' => is_callable($value),
+                'false' => $value === false,
+                'float' => is_float($value) || is_int($value),
+                'iterable' => is_iterable($value),
+                'mixed' => true,
+                'object' => is_object($value),
+                'true' => $value === true,
+                default => get_debug_type($value) === $type->getName(),
+            };
+        }
+
+        $className = static::resolveClassName($type->getName(), $declaringClass);
+
+        return $className !== null && $value instanceof $className;
+    }
+
+    /**
+     * Resolves a parameter type name to a class name.
+     *
+     * @param string $typeName The parameter type name.
+     * @param ReflectionClass<object>|null $declaringClass The class declaring the parameter.
+     * @return string|null The resolved class name.
+     */
+    protected static function resolveClassName(string $typeName, ReflectionClass|null $declaringClass): string|null
+    {
+        $className = match ($typeName) {
+            'parent' => $declaringClass?->getParentClass() ?: null,
+            'self' => $declaringClass,
+            default => $typeName,
+        };
+
+        if ($className instanceof ReflectionClass) {
+            $className = $className->getName();
+        }
+
+        return $className;
     }
 }

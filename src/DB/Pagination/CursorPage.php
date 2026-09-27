@@ -500,7 +500,7 @@ class CursorPage extends AbstractPage
                 );
             }
 
-            if (!is_string($orderField) && !$orderField instanceof ValueExpressionInterface) {
+            if (!is_string($orderField) && !($orderField instanceof ValueExpressionInterface)) {
                 throw new InvalidArgumentException('Cursor pagination requires ordered aliases to resolve to fields or value expressions.');
             }
 

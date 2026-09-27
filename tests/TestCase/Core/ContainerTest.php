@@ -3,16 +3,21 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Core;
 
+use ArrayObject;
 use Closure;
+use Countable;
 use Fyre\Core\Container;
 use Fyre\Core\Exceptions\ContainerException;
 use Fyre\Core\Exceptions\ContainerNotFoundException;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use IteratorAggregate;
 use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use RuntimeException;
+use SplObjectStorage;
 use Tests\Mock\Core\Container\ArgumentService;
 use Tests\Mock\Core\Container\CircularDependency;
 use Tests\Mock\Core\Container\CircularService;
@@ -26,6 +31,7 @@ use Tests\Mock\Core\Container\OuterService;
 use Tests\Mock\Core\Container\Service;
 
 use function class_uses;
+use function func_get_args;
 
 final class ContainerTest extends TestCase
 {
@@ -46,6 +52,39 @@ final class ContainerTest extends TestCase
             'invokable object' => [static fn(): InvokableClass => new InvokableClass()],
             'class method string' => [static fn(): string => Service::class.'::value'],
             'static method string' => [static fn(): string => Service::class.'::staticValue'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{Closure, array<string, mixed>, mixed}>
+     */
+    public static function callUnmatchedArgumentsTypesProvider(): array
+    {
+        $item = new Item('test');
+        $collection = new ArrayObject();
+        $partial = new SplObjectStorage();
+        $callback = static fn(): string => 'test';
+
+        return [
+            'array' => [static fn(array $value): array => $value, ['argument' => [1, 2]], [1, 2]],
+            'bool' => [static fn(bool $value): bool => $value, ['argument' => false], false],
+            'callable' => [static fn(callable $value): callable => $value, ['argument' => $callback], $callback],
+            'false' => [static fn(false $value): false => $value, ['argument' => false], false],
+            'float' => [static fn(float $value): float => $value, ['argument' => 1.5], 1.5],
+            'floatInteger' => [static fn(float $value): float => $value, ['argument' => 1], 1.0],
+            'int' => [static fn(int $value): int => $value, ['invalid' => '2', 'argument' => 2], 2],
+            'intersection' => [static fn(Countable&IteratorAggregate $value): mixed => $value, ['partial' => $partial, 'argument' => $collection], $collection],
+            'iterableArray' => [static fn(iterable $value): iterable => $value, ['argument' => [1, 2]], [1, 2]],
+            'iterableObject' => [static fn(iterable $value): iterable => $value, ['argument' => $collection], $collection],
+            'mixed' => [static fn(mixed $value): mixed => $value, ['argument' => $item], $item],
+            'null' => [static fn(null $value): null => $value, ['argument' => null], null],
+            'nullable' => [static fn(Item|null $value): Item|null => $value, ['argument' => null], null],
+            'object' => [static fn(object $value): object => $value, ['argument' => $item], $item],
+            'string' => [static fn(string $value): string => $value, ['invalid' => 2, 'argument' => 'test'], 'test'],
+            'true' => [static fn(true $value): true => $value, ['argument' => true], true],
+            'unionIntersection' => [static fn((Countable&IteratorAggregate)|Item $value): mixed => $value, ['partial' => $partial, 'argument' => $collection], $collection],
+            'unionObject' => [static fn((Countable&IteratorAggregate)|Item $value): mixed => $value, ['argument' => $item], $item],
+            'unionScalar' => [static fn(Item|string $value): Item|string => $value, ['argument' => 'test'], 'test'],
         ];
     }
 
@@ -197,6 +236,18 @@ final class ContainerTest extends TestCase
         );
     }
 
+    public function testBuildUnmatchedArguments(): void
+    {
+        $innerService = new InnerService();
+
+        $outerService = $this->container->build(OuterService::class, ['service' => $innerService]);
+
+        $this->assertSame(
+            $innerService,
+            $outerService->getInnerService()
+        );
+    }
+
     public function testCall(): void
     {
         $this->container->singleton(InnerService::class);
@@ -307,6 +358,111 @@ final class ContainerTest extends TestCase
         $this->assertSame(
             1,
             $result
+        );
+    }
+
+    public function testCallUnmatchedArguments(): void
+    {
+        $item = new Item('test');
+
+        $result = $this->container->call(
+            static fn(Item $item): array => func_get_args(),
+            ['entity' => $item, 'extra' => 'test']
+        );
+
+        $this->assertArraysAreIdentical(
+            [$item, 'test'],
+            $result
+        );
+    }
+
+    public function testCallUnmatchedArgumentsContext(): void
+    {
+        $item = new Item('other');
+
+        $result = $this->container->call(
+            static fn(#[ItemContext('test')] Item $item): Item => $item,
+            ['entity' => $item]
+        );
+
+        $this->assertSame(
+            'test',
+            $result->getValue()
+        );
+    }
+
+    public function testCallUnmatchedArgumentsInterface(): void
+    {
+        $container = new Container(false);
+
+        $result = $this->container->call(
+            static fn(ContainerInterface $dependency): ContainerInterface => $dependency,
+            ['service' => $container]
+        );
+
+        $this->assertSame(
+            $container,
+            $result
+        );
+    }
+
+    public function testCallUnmatchedArgumentsNamed(): void
+    {
+        $first = new Item('first');
+        $second = new Item('second');
+
+        $result = $this->container->call(
+            static fn(Item $first, Item $second): array => [$first, $second],
+            ['second' => $second, 'entity' => $first]
+        );
+
+        $this->assertArraysAreIdentical(
+            [$first, $second],
+            $result
+        );
+    }
+
+    public function testCallUnmatchedArgumentsOrder(): void
+    {
+        $first = new Item('first');
+        $second = new Item('second');
+
+        $result = $this->container->call(
+            static fn(Item|null $a = null, Item|null $b = null): array => [$a, $b],
+            ['second' => $second, 'first' => $first]
+        );
+
+        $this->assertArraysAreIdentical(
+            [$second, $first],
+            $result
+        );
+    }
+
+    public function testCallUnmatchedArgumentsPositional(): void
+    {
+        $item = new Item('test');
+        $other = new Item('other');
+
+        $result = $this->container->call(
+            static fn(Item $item): Item => $item,
+            [$item, 'entity' => $other]
+        );
+
+        $this->assertSame(
+            $item,
+            $result
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $arguments
+     */
+    #[DataProvider('callUnmatchedArgumentsTypesProvider')]
+    public function testCallUnmatchedArgumentsTypes(Closure $callback, array $arguments, mixed $expected): void
+    {
+        $this->assertSame(
+            $expected,
+            $this->container->call($callback, $arguments)
         );
     }
 

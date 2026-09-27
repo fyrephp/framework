@@ -144,11 +144,16 @@ For both `build()` and `call()`, parameters are resolved in this order:
 1. a matching named argument you pass explicitly
 2. the next positional argument you pass explicitly
 3. a contextual attribute on the parameter
-4. a class or interface type-hint
-5. the parameter default value or `null` when allowed
-6. otherwise, a `ContainerException`
+4. the first value matching the parameter type, supplied under an unmatched argument name
+5. a class or interface type-hint resolved through the container
+6. the parameter default value or `null` when allowed
+7. otherwise, a `ContainerException`
 
 That keeps constructor and method signatures predictable while still allowing targeted overrides.
+
+For example, passing `['entity' => $entity]` to a callback expecting `Entity $item` uses the supplied entity. Arguments named for other parameters remain reserved for those parameters. Matching values are consumed once, in the order provided. Unused arguments are still appended positionally.
+
+Type matching supports classes, interfaces, built-in types, nullable types, unions, and intersections. Matching does not coerce scalar values, except that integers are accepted for `float` parameters as PHP permits. Union and intersection types can match supplied values but are not automatically constructed by the container.
 
 ## Contextual attributes
 
