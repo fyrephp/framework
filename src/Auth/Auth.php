@@ -208,9 +208,9 @@ class Auth
     {
         if ($redirect instanceof UriInterface) {
             $redirect = (string) $redirect
+                ->withPort(null)
                 ->withScheme('')
-                ->withHost('')
-                ->withPort(null);
+                ->withHost('');
         }
 
         return $this->router->url($this->loginRoute, [

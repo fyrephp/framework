@@ -9,7 +9,9 @@ use Fyre\Auth\Authenticators\TokenAuthenticator;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\ServerRequest;
+use Fyre\Http\Uri;
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Authenticators\MockAuthenticator;
 use Tests\Mock\Entities\User;
@@ -19,6 +21,20 @@ use function class_uses;
 final class AuthTest extends TestCase
 {
     use ConnectionTrait;
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function redirectUriProvider(): array
+    {
+        return [
+            'without port' => ['https://example.com/private?tab=profile#details'],
+            'with port' => ['http://localhost:8080/private?tab=profile#details'],
+            'with default port' => ['https://example.com:443/private?tab=profile#details'],
+            'without scheme' => ['//localhost:8080/private?tab=profile#details'],
+            'relative' => ['/private?tab=profile#details'],
+        ];
+    }
 
     public function testAttempt(): void
     {
@@ -150,6 +166,31 @@ final class AuthTest extends TestCase
             DebugTrait::class,
             class_uses(Auth::class)
         );
+    }
+
+    public function testGetLoginUrl(): void
+    {
+        $this->assertSame('/login', $this->auth->getLoginUrl());
+    }
+
+    public function testGetLoginUrlStringRedirect(): void
+    {
+        $this->assertSame(
+            '/login?url=%2Fprivate',
+            $this->auth->getLoginUrl('/private')
+        );
+    }
+
+    #[DataProvider('redirectUriProvider')]
+    public function testGetLoginUrlUriRedirect(string $value): void
+    {
+        $uri = new Uri($value);
+
+        $this->assertSame(
+            '/login?url=%2Fprivate%3Ftab%3Dprofile%23details',
+            $this->auth->getLoginUrl($uri)
+        );
+        $this->assertSame($value, (string) $uri);
     }
 
     public function testImpersonate(): void
