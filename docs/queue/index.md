@@ -117,6 +117,7 @@ Options:
 - `port` (`int`) - Redis port (default: `6379`)
 - `password` (`string|null`) - Redis password (default: `null`)
 - `database` (`int|null`) - Redis database index (default: `null`)
+- `prefix` (`string`) - prefix for every queue storage key and queue discovery (default: `''`); glob characters (`*`, `?`, `[`, `]`, and `\`) are not allowed
 - `timeout` (`int`) - connection timeout in seconds (default: `0`)
 - `visibilityTimeout` (`int`) - seconds before an uncompleted job can be delivered again (default: `300`)
 - `persist` (`bool`) - whether to use a persistent connection (default: `true`)

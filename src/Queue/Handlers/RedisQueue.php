@@ -24,6 +24,7 @@ use function random_bytes;
 use function serialize;
 use function sprintf;
 use function strlen;
+use function strpbrk;
 use function substr;
 use function time;
 use function unserialize;
@@ -53,6 +54,7 @@ class RedisQueue extends Queue
         'password' => null,
         'port' => 6379,
         'database' => null,
+        'prefix' => '',
         'timeout' => 0,
         'visibilityTimeout' => 300,
         'persist' => true,
@@ -107,6 +109,13 @@ class RedisQueue extends Queue
         parent::__construct($container, $options);
 
         $this->reservations = new WeakMap();
+
+        if (
+            !is_string($this->config['prefix']) ||
+            strpbrk($this->config['prefix'], '*?[]\\') !== false
+        ) {
+            throw new InvalidArgumentException('Redis queue prefix must be a string without glob characters.');
+        }
 
         try {
             $this->connection = new Redis();
@@ -171,10 +180,10 @@ class RedisQueue extends Queue
     public function clear(string $queue = self::DEFAULT): void
     {
         $this->connection->del(
-            static::prepareKey($queue),
-            static::prepareKey($queue, 'delayed'),
-            static::prepareKey($queue, 'processing'),
-            static::prepareKey($queue, 'unique')
+            $this->prepareKey($queue),
+            $this->prepareKey($queue, 'delayed'),
+            $this->prepareKey($queue, 'processing'),
+            $this->prepareKey($queue, 'unique')
         );
     }
 
@@ -231,7 +240,7 @@ class RedisQueue extends Queue
     #[Override]
     public function forgetFailed(string $id, string $queue = self::DEFAULT): bool
     {
-        return $this->connection->hDel(static::prepareKey($queue, 'failures'), $id) === 1;
+        return $this->connection->hDel($this->prepareKey($queue, 'failures'), $id) === 1;
     }
 
     /**
@@ -240,7 +249,7 @@ class RedisQueue extends Queue
     #[Override]
     public function getFailed(string $queue = self::DEFAULT): array
     {
-        $data = static::prepareKey($queue, 'failures') |> $this->connection->hGetAll(...);
+        $data = $this->prepareKey($queue, 'failures') |> $this->connection->hGetAll(...);
         $failures = [];
 
         foreach ($data as $id => $failure) {
@@ -330,10 +339,10 @@ class RedisQueue extends Queue
                 return 1
                 LUA,
             [
-                static::prepareKey($queue, 'unique'),
-                static::prepareKey($queue),
-                static::prepareKey($queue, 'delayed'),
-                static::prepareKey($queue, 'total'),
+                $this->prepareKey($queue, 'unique'),
+                $this->prepareKey($queue),
+                $this->prepareKey($queue, 'delayed'),
+                $this->prepareKey($queue, 'total'),
                 $payload,
                 $uniqueHash ?? '',
                 $after === null ? '' : (string) $after,
@@ -353,9 +362,9 @@ class RedisQueue extends Queue
         $iterator = null;
         $queues = [];
 
-        while (($keys = $this->connection->scan($iterator, static::prepareKey('*'), 50)) !== false) {
+        while (($keys = $this->connection->scan($iterator, $this->prepareKey('*'), 50)) !== false) {
             foreach ($keys as $key) {
-                $queue = explode(':', $key, 3)[1] ?? '';
+                $queue = explode(':', substr($key, strlen($this->config['prefix']) + 6), 2)[0];
 
                 if ($queue && !in_array($queue, $queues, true)) {
                     $queues[] = $queue;
@@ -372,9 +381,9 @@ class RedisQueue extends Queue
     #[Override]
     public function reset(string $queue = self::DEFAULT): void
     {
-        static::prepareKey($queue, 'completed') |> $this->connection->del(...);
-        static::prepareKey($queue, 'failed') |> $this->connection->del(...);
-        static::prepareKey($queue, 'total') |> $this->connection->del(...);
+        $this->prepareKey($queue, 'completed') |> $this->connection->del(...);
+        $this->prepareKey($queue, 'failed') |> $this->connection->del(...);
+        $this->prepareKey($queue, 'total') |> $this->connection->del(...);
     }
 
     /**
@@ -383,7 +392,7 @@ class RedisQueue extends Queue
     #[Override]
     public function retryFailed(string $id, string $queue = self::DEFAULT): bool
     {
-        $failure = $this->connection->hGet(static::prepareKey($queue, 'failures'), $id);
+        $failure = $this->connection->hGet($this->prepareKey($queue, 'failures'), $id);
 
         if (!is_string($failure)) {
             return false;
@@ -409,12 +418,24 @@ class RedisQueue extends Queue
     public function stats(string $queue = self::DEFAULT): array
     {
         return [
-            'queued' => (int) (static::prepareKey($queue) |> $this->connection->lLen(...)),
-            'delayed' => (int) $this->connection->zCount(static::prepareKey($queue, 'delayed'), '-inf', '+inf'),
-            'completed' => (int) (static::prepareKey($queue, 'completed') |> $this->connection->get(...)),
-            'failed' => (int) (static::prepareKey($queue, 'failed') |> $this->connection->get(...)),
-            'total' => (int) (static::prepareKey($queue, 'total') |> $this->connection->get(...)),
+            'queued' => (int) ($this->prepareKey($queue) |> $this->connection->lLen(...)),
+            'delayed' => (int) $this->connection->zCount($this->prepareKey($queue, 'delayed'), '-inf', '+inf'),
+            'completed' => (int) ($this->prepareKey($queue, 'completed') |> $this->connection->get(...)),
+            'failed' => (int) ($this->prepareKey($queue, 'failed') |> $this->connection->get(...)),
+            'total' => (int) ($this->prepareKey($queue, 'total') |> $this->connection->get(...)),
         ];
+    }
+
+    /**
+     * Returns the key for a queue with optional suffix.
+     *
+     * @param string $queue The queue name.
+     * @param string $suffix The key suffix.
+     * @return string The key.
+     */
+    protected function prepareKey(string $queue, string $suffix = ''): string
+    {
+        return $this->config['prefix'].'queue:'.$queue.($suffix ? ':'.$suffix : '');
     }
 
     /**
@@ -458,9 +479,9 @@ class RedisQueue extends Queue
                 return moved
                 LUA,
             [
-                static::prepareKey($queue, $source),
-                static::prepareKey($queue),
-                static::prepareKey($queue, 'total'),
+                $this->prepareKey($queue, $source),
+                $this->prepareKey($queue),
+                $this->prepareKey($queue, 'total'),
                 (string) time(),
                 (string) static::RELEASE_LIMIT,
                 $reserved ? '1' : '0',
@@ -493,8 +514,8 @@ class RedisQueue extends Queue
                 return payload
                 LUA,
             [
-                static::prepareKey($queue),
-                static::prepareKey($queue, 'processing'),
+                $this->prepareKey($queue),
+                $this->prepareKey($queue, 'processing'),
                 (string) (time() + $this->config['visibilityTimeout']),
                 $receipt,
             ],
@@ -603,14 +624,14 @@ class RedisQueue extends Queue
                 return 1
                 LUA,
             [
-                static::prepareKey($queue, 'processing'),
-                static::prepareKey($queue, 'unique'),
-                static::prepareKey($queue, 'completed'),
-                static::prepareKey($queue, 'failed'),
-                static::prepareKey($queue),
-                static::prepareKey($queue, 'total'),
-                static::prepareKey($queue, 'delayed'),
-                static::prepareKey($queue, 'failures'),
+                $this->prepareKey($queue, 'processing'),
+                $this->prepareKey($queue, 'unique'),
+                $this->prepareKey($queue, 'completed'),
+                $this->prepareKey($queue, 'failed'),
+                $this->prepareKey($queue),
+                $this->prepareKey($queue, 'total'),
+                $this->prepareKey($queue, 'delayed'),
+                $this->prepareKey($queue, 'failures'),
                 $reservation,
                 $uniqueHash ?? '',
                 $action,
@@ -671,17 +692,5 @@ class RedisQueue extends Queue
         return $failure instanceof FailedMessage ?
             $failure :
             null;
-    }
-
-    /**
-     * Returns the key for a queue with optional suffix.
-     *
-     * @param string $queue The queue name.
-     * @param string $suffix The key suffix.
-     * @return string The key.
-     */
-    protected static function prepareKey(string $queue, string $suffix = ''): string
-    {
-        return 'queue:'.$queue.($suffix ? ':'.$suffix : '');
     }
 }

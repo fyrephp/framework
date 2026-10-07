@@ -213,10 +213,15 @@ $temp = $connections->build([
 | `hasConfig($key = 'default')` | check whether a configuration exists |
 | `isLoaded($key = 'default')` | check whether a connection has been built |
 | `setConfig($key, $options)` | add a runtime configuration |
+| `alias($source, $alias)` | redirect a name to a configured connection before the original connection is loaded |
+| `dropAlias($alias)` | remove a name redirection |
+| `getAliases()` | read name redirections and their configured targets |
 | `unload($key = 'default')` | remove a configuration and its loaded connection |
-| `clear()` | remove every configuration and loaded connection |
+| `clear()` | remove every configuration, loaded connection, and alias |
 
 `setConfig()` throws when the key already exists. Unload the existing entry before replacing it.
+
+`use()` and `isLoaded()` resolve aliases. Configuration methods and `unload()` use the original configured names. Alias chains are not supported. For test bootstrap mappings, see [Test configuration](../testing/configuration.md).
 
 ## Running queries
 

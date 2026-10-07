@@ -75,7 +75,9 @@ final class ItemsTableTest extends TestCase
 }
 ```
 
-`TestCase` disables foreign-key checks while loading data and again while truncating affected tables after the test. Checks are re-enabled even if setup or cleanup fails.
+Automatic fixtures require configured `test` or `test_*` write connections. Add test connection aliases before resolving models; see [Test configuration](configuration.md).
+
+`TestCase` disables foreign-key checks on each affected write connection while loading data and again while truncating affected tables after the test. Checks are re-enabled even if setup or cleanup fails.
 
 For manual loading, resolve the registry and run the fixture:
 
@@ -162,6 +164,7 @@ The setup above uses the shared registry and the `ItemsFixture` definition. The 
 | `getClassAlias()` | return the explicit alias or derive it from the fixture class name |
 | `getModel()` | resolve and cache the fixture model |
 | `getTables()` | return the model, associated, and junction tables affected by the fixture |
+| `getTablesByConnection()` | group affected tables by their models' write connections |
 
 ## Behavior notes
 
@@ -170,7 +173,7 @@ The setup above uses the shared registry and the `ItemsFixture` definition. The 
 - `FixtureRegistry::clear()` removes namespaces as well as fixture instances.
 - Fixture saves bypass guards, validation, existence checks, and application rules, but database constraints still apply.
 - Nested relationship rows are ignored unless `$associated` allows them.
-- Automatic `TestCase` cleanup truncates every table returned by `getTables()`.
+- Automatic `TestCase` cleanup truncates every table returned by `getTablesByConnection()` through its write connection.
 
 ## Related
 

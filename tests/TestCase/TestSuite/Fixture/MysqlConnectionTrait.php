@@ -78,7 +78,7 @@ trait MysqlConnectionTrait
         $app->use(Config::class)
             ->set('App.locale', 'en')
             ->set('Database', [
-                'default' => [
+                'test' => [
                     'className' => MysqlConnection::class,
                     'host' => getenv('MYSQL_HOST'),
                     'username' => getenv('MYSQL_USERNAME'),
@@ -90,6 +90,8 @@ trait MysqlConnectionTrait
                     'compress' => true,
                 ],
             ]);
+
+        $app->use(ConnectionManager::class)->alias('test', 'default');
 
         static::setUpSchema();
     }

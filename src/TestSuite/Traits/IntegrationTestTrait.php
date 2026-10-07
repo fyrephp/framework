@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Fyre\TestSuite\Traits;
 
+use Closure;
+use Fyre\Event\Event;
+use Fyre\Event\EventManager;
 use Fyre\Http\ClientResponse;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
@@ -38,6 +41,7 @@ use InvalidArgumentException;
 use LogicException;
 use PHPUnit\Framework\Attributes\After;
 use RuntimeException;
+use Throwable;
 
 use function array_replace_recursive;
 use function array_walk_recursive;
@@ -66,6 +70,11 @@ use const UPLOAD_ERR_OK;
 trait IntegrationTestTrait
 {
     protected array $cookies = [];
+
+    /**
+     * @var (Closure(Event, Throwable): void)|null
+     */
+    protected Closure|null $errorHandlerCallback = null;
 
     protected array $request = [];
 
@@ -628,6 +637,22 @@ trait IntegrationTestTrait
     }
 
     /**
+     * Lets exceptions propagate through the HTTP test request.
+     */
+    public function disableErrorRendering(): void
+    {
+        if ($this->errorHandlerCallback !== null) {
+            return;
+        }
+
+        $this->errorHandlerCallback = static function(Event $event, Throwable $exception): void {
+            throw $exception;
+        };
+
+        $this->app->use(EventManager::class)->on('Error.beforeRender', $this->errorHandlerCallback, EventManager::PRIORITY_HIGH);
+    }
+
+    /**
      * Enable CSRF token for the request.
      *
      * @param string $cookieName The name of the CSRF token cookie.
@@ -658,6 +683,19 @@ trait IntegrationTestTrait
             $this->request['headers'] ??= [];
             $this->request['headers'][$header] = $formToken;
         }
+    }
+
+    /**
+     * Enables error response rendering for HTTP test requests.
+     */
+    public function enableErrorRendering(): void
+    {
+        if ($this->errorHandlerCallback === null) {
+            return;
+        }
+
+        $this->app->use(EventManager::class)->off('Error.beforeRender', $this->errorHandlerCallback);
+        $this->errorHandlerCallback = null;
     }
 
     /**
@@ -808,6 +846,7 @@ trait IntegrationTestTrait
         }
 
         $this->cookies = [];
+        $this->enableErrorRendering();
         $this->request = [];
         $this->requestData = [];
         $this->requestFiles = [];
@@ -891,6 +930,7 @@ trait IntegrationTestTrait
         $request = $this->app->use(ServerRequest::class, ['options' => $options]);
 
         $_SESSION = $this->session;
+        $this->response = null;
 
         try {
             $this->response = $handler->handle($request);

@@ -7,7 +7,9 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use InvalidArgumentException;
+use LogicException;
 
+use function in_array;
 use function is_string;
 use function is_subclass_of;
 use function sprintf;
@@ -20,6 +22,11 @@ class ConnectionManager
     use DebugTrait;
 
     public const DEFAULT = 'default';
+
+    /**
+     * @var array<string, string>
+     */
+    protected array $aliases = [];
 
     /**
      * @var array<string, array<string, mixed>>
@@ -46,6 +53,55 @@ class ConnectionManager
         foreach ($handlers as $key => $options) {
             $this->setConfig($key, $options);
         }
+    }
+
+    /**
+     * Aliases a connection name to a configured connection.
+     *
+     * Aliases must be added before the original connection is loaded.
+     * The source must be a configured name, rather than another alias.
+     *
+     * @param string $source The configured connection name.
+     * @param string $alias The name to redirect.
+     * @return static The ConnectionManager instance.
+     *
+     * @throws InvalidArgumentException If the source is missing or is an alias.
+     * @throws LogicException If the original connection is already loaded.
+     */
+    public function alias(string $source, string $alias): static
+    {
+        if (
+            $source === $alias ||
+            !isset($this->config[$source]) ||
+            isset($this->aliases[$source])
+        ) {
+            throw new InvalidArgumentException(sprintf(
+                'Database connection alias source `%s` is not valid.',
+                $source
+            ));
+        }
+
+        if (in_array($alias, $this->aliases, true)) {
+            throw new InvalidArgumentException(sprintf(
+                'Database connection `%s` is already an alias source.',
+                $alias
+            ));
+        }
+
+        if (($this->aliases[$alias] ?? null) === $source) {
+            return $this;
+        }
+
+        if ($this->isLoaded($alias)) {
+            throw new LogicException(sprintf(
+                'Database connection `%s` is already loaded.',
+                $alias
+            ));
+        }
+
+        $this->aliases[$alias] = $source;
+
+        return $this;
     }
 
     /**
@@ -81,12 +137,38 @@ class ConnectionManager
      */
     public function clear(): void
     {
+        $this->aliases = [];
         $this->config = [];
         $this->instances = [];
     }
 
     /**
+     * Removes a connection alias.
+     *
+     * @param string $alias The alias.
+     * @return static The ConnectionManager instance.
+     */
+    public function dropAlias(string $alias): static
+    {
+        unset($this->aliases[$alias]);
+
+        return $this;
+    }
+
+    /**
+     * Returns connection aliases and their configured targets.
+     *
+     * @return array<string, string> The connection aliases.
+     */
+    public function getAliases(): array
+    {
+        return $this->aliases;
+    }
+
+    /**
      * Returns the handler config.
+     *
+     * Note: Configuration is returned by its original name, without resolving aliases.
      *
      * @param string|null $key The config key.
      * @return array<string, mixed>|null The config array, or a single config when `$key` is supplied.
@@ -119,6 +201,8 @@ class ConnectionManager
      */
     public function isLoaded(string $key = self::DEFAULT): bool
     {
+        $key = $this->aliases[$key] ?? $key;
+
         return isset($this->instances[$key]);
     }
 
@@ -166,6 +250,8 @@ class ConnectionManager
      */
     public function use(string $key = self::DEFAULT): Connection
     {
+        $key = $this->aliases[$key] ?? $key;
+
         return $this->instances[$key] ??= $this->build($this->config[$key] ?? []);
     }
 }

@@ -97,6 +97,25 @@ final class CacheManagerTest extends TestCase
         );
     }
 
+    public function testDisableLoadedHandler(): void
+    {
+        $handler = $this->cacheManager->use();
+        $handler->set('test', 'value');
+
+        $this->cacheManager->disable();
+
+        $this->assertInstanceOf(
+            NullCacher::class,
+            $this->cacheManager->use()
+        );
+        $this->assertNull($this->cacheManager->use()->get('test'));
+
+        $this->cacheManager->enable();
+
+        $this->assertSame($handler, $this->cacheManager->use());
+        $this->assertSame('value', $this->cacheManager->use()->get('test'));
+    }
+
     public function testEnable(): void
     {
         $this->cacheManager->disable();
@@ -109,6 +128,23 @@ final class CacheManagerTest extends TestCase
         $this->assertTrue(
             $this->cacheManager->isEnabled()
         );
+
+        $this->assertInstanceOf(
+            ArrayCacher::class,
+            $this->cacheManager->use()
+        );
+    }
+
+    public function testEnableAfterUsingDisabledHandler(): void
+    {
+        $this->cacheManager->disable();
+
+        $this->assertInstanceOf(
+            NullCacher::class,
+            $this->cacheManager->use()
+        );
+
+        $this->cacheManager->enable();
 
         $this->assertInstanceOf(
             ArrayCacher::class,

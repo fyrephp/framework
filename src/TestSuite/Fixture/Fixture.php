@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\TestSuite\Fixture;
 
 use Fyre\Core\Traits\DebugTrait;
+use Fyre\DB\Connection;
 use Fyre\ORM\Model;
 use Fyre\ORM\ModelRegistry;
 use Fyre\ORM\Relationship;
@@ -11,9 +12,12 @@ use Fyre\ORM\Relationships\ManyToMany;
 use ReflectionClass;
 use RuntimeException;
 
-use function array_keys;
+use function array_map;
+use function array_unique;
+use function array_values;
 use function assert;
 use function preg_replace;
+use function spl_object_id;
 use function sprintf;
 
 /**
@@ -99,31 +103,33 @@ abstract class Fixture
      */
     public function getTables(): array
     {
-        $model = $this->getModel();
-        $associated = Model::normalizeContain($this->associated() ?? [], $model, 'associated')['associated'];
+        return array_map(
+            static fn(Model $model): string => $model->getTable(),
+            $this->getModels()
+        ) |> array_unique(...) |> array_values(...);
+    }
 
-        $tables = [$model->getTable() => true];
+    /**
+     * Groups fixture tables by their models' write connections.
+     *
+     * @return array<int, array{connection: Connection, tables: string[]}> The fixture tables.
+     */
+    public function getTablesByConnection(): array
+    {
+        $groups = [];
 
-        $collect = static function(Model $model, array $associated) use (&$collect, &$tables): void {
-            foreach ($associated as $alias => $data) {
-                $relationship = $model->getRelationship($alias);
+        foreach ($this->getModels() as $model) {
+            $connection = $model->getConnection();
+            $key = spl_object_id($connection);
+            $groups[$key] ??= ['connection' => $connection, 'tables' => []];
+            $groups[$key]['tables'][] = $model->getTable();
+        }
 
-                assert($relationship instanceof Relationship);
+        foreach ($groups as &$group) {
+            $group['tables'] = array_unique($group['tables']) |> array_values(...);
+        }
 
-                if ($relationship instanceof ManyToMany) {
-                    $tables[$relationship->getJunction()->getTable()] = true;
-                }
-
-                $target = $relationship->getTarget();
-                $tables[$target->getTable()] = true;
-
-                $collect($target, $data['associated']);
-            }
-        };
-
-        $collect($model, $associated);
-
-        return array_keys($tables);
+        return $groups;
     }
 
     /**
@@ -151,5 +157,39 @@ abstract class Fixture
                 ));
             }
         }
+    }
+
+    /**
+     * Returns models implied by the fixture and its configured associations.
+     *
+     * @return Model[] The fixture models.
+     */
+    protected function getModels(): array
+    {
+        $model = $this->getModel();
+        $associated = Model::normalizeContain($this->associated() ?? [], $model, 'associated')['associated'];
+
+        $models = [$model];
+
+        $collect = static function(Model $model, array $associated) use (&$collect, &$models): void {
+            foreach ($associated as $alias => $data) {
+                $relationship = $model->getRelationship($alias);
+
+                assert($relationship instanceof Relationship);
+
+                if ($relationship instanceof ManyToMany) {
+                    $models[] = $relationship->getJunction();
+                }
+
+                $target = $relationship->getTarget();
+                $models[] = $target;
+
+                $collect($target, $data['associated']);
+            }
+        };
+
+        $collect($model, $associated);
+
+        return $models;
     }
 }

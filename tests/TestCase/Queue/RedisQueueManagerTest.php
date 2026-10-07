@@ -45,6 +45,7 @@ final class RedisQueueManagerTest extends TestCase
                     'password' => '',
                     'port' => '[*****]',
                     'database' => '',
+                    'prefix' => '',
                     'timeout' => 0,
                     'visibilityTimeout' => 300,
                     'persist' => true,

@@ -95,6 +95,7 @@ Timers and benchmarks report measurements; they are not assertions and do not de
 
 ## Pages in this section
 
+- [Test configuration](configuration.md) - isolate database connections, queues, cache, and error handling
 - [`TestCase`](test-case.md) - base PHPUnit test case for framework-powered tests
 - [Constraints](constraints.md) - lower-level PHPUnit constraints behind the higher-level helpers
 - [Fixtures](fixtures.md) - define and load repeatable database data

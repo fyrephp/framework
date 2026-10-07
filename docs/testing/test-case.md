@@ -45,6 +45,8 @@ protected array $fixtures = ['Users'];
 
 For fixture definitions, discovery rules, and examples, see [Fixtures](fixtures.md).
 
+Fixtures require configured `test` or `test_*` write connections. Set up the connection aliases before resolving models; see [Test configuration](configuration.md).
+
 During setup, `TestCase` disables foreign key checks while loading fixture data. During cleanup, it does the same while truncating the fixture tables and any tables implied by configured associations. Foreign key checks are re-enabled even if either operation fails.
 
 ## Method guide

@@ -3,13 +3,19 @@ declare(strict_types=1);
 
 namespace Fyre\TestSuite;
 
+use Closure;
 use Fyre\Core\Engine;
+use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
 use Fyre\TestSuite\Fixture\FixtureRegistry;
 use Override;
+use Throwable;
 
+use function array_reverse;
+use function array_unique;
+use function array_values;
 use function assert;
-use function in_array;
+use function spl_object_id;
 
 /**
  * Base PHPUnit test case for the framework test suite.
@@ -59,6 +65,32 @@ class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * Collects fixture tables and validates every connection before changing data.
+     *
+     * @return array<int, array{connection: Connection, tables: string[]}> The fixture tables.
+     */
+    protected function getFixtureTables(): array
+    {
+        $connectionManager = $this->app->use(ConnectionManager::class);
+        $fixtureRegistry = $this->app->use(FixtureRegistry::class);
+        $groups = [];
+
+        foreach ($this->fixtures as $fixture) {
+            foreach ($fixtureRegistry->use($fixture)->getTablesByConnection() as $group) {
+                ConnectionHelper::assertTestConnection($connectionManager, $group['connection']);
+                $key = spl_object_id($group['connection']);
+                $groups[$key] ??= ['connection' => $group['connection'], 'tables' => []];
+                $groups[$key]['tables'] = array_values(array_unique([
+                    ...$groups[$key]['tables'],
+                    ...$group['tables'],
+                ]));
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
      * Set up the fixtures.
      */
     protected function setupFixtures(): void
@@ -67,18 +99,14 @@ class TestCase extends \PHPUnit\Framework\TestCase
             return;
         }
 
-        $connection = $this->app->use(ConnectionManager::class)->use();
+        $groups = $this->getFixtureTables();
         $fixtureRegistry = $this->app->use(FixtureRegistry::class);
 
-        $connection->disableForeignKeys();
-
-        try {
+        $this->withFixtureConnections($groups, function() use ($fixtureRegistry): void {
             foreach ($this->fixtures as $fixture) {
                 $fixtureRegistry->use($fixture)->run();
             }
-        } finally {
-            $connection->enableForeignKeys();
-        }
+        });
     }
 
     /**
@@ -90,28 +118,49 @@ class TestCase extends \PHPUnit\Framework\TestCase
             return;
         }
 
-        $fixtureRegistry = $this->app->use(FixtureRegistry::class);
-        $connection = $this->app->use(ConnectionManager::class)->use();
-        $tables = [];
+        $groups = $this->getFixtureTables();
 
-        foreach ($this->fixtures as $fixtureAlias) {
-            foreach ($fixtureRegistry->use($fixtureAlias)->getTables() as $table) {
-                if (in_array($table, $tables)) {
-                    continue;
+        $this->withFixtureConnections($groups, static function() use ($groups): void {
+            foreach ($groups as $group) {
+                foreach ($group['tables'] as $table) {
+                    $group['connection']->truncate($table);
                 }
-
-                $tables[] = $table;
             }
-        }
+        });
+    }
 
-        $connection->disableForeignKeys();
+    /**
+     * Disables foreign keys on each fixture connection while running a callback.
+     *
+     * @param array<int, array{connection: Connection, tables: string[]}> $groups The fixture tables.
+     * @param Closure(): void $callback The callback.
+     */
+    protected function withFixtureConnections(array $groups, Closure $callback): void
+    {
+        $connections = [];
 
         try {
-            foreach ($tables as $table) {
-                $connection->truncate($table);
+            foreach ($groups as $group) {
+                $connection = $group['connection'];
+                $connection->disableForeignKeys();
+                $connections[] = $connection;
             }
+
+            $callback();
         } finally {
-            $connection->enableForeignKeys();
+            $exception = null;
+
+            foreach (array_reverse($connections) as $connection) {
+                try {
+                    $connection->enableForeignKeys();
+                } catch (Throwable $e) {
+                    $exception = $e;
+                }
+            }
+
+            if ($exception !== null) {
+                throw $exception;
+            }
         }
     }
 

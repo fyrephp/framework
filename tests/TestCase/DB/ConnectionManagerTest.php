@@ -21,6 +21,42 @@ final class ConnectionManagerTest extends TestCase
 {
     protected ConnectionManager $connectionManager;
 
+    public function testAliasCannotRedirectAnotherAliasSource(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Database connection `test` is already an alias source.');
+
+        $this->connectionManager->setConfig('test', [
+            'className' => TestMysqlConnection::class,
+        ]);
+
+        $this->connectionManager->alias('test', 'default');
+
+        $this->connectionManager->alias('other', 'test');
+    }
+
+    public function testAliasCannotUseAnAliasSource(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Database connection alias source `default` is not valid.');
+
+        $this->connectionManager->setConfig('test', [
+            'className' => TestMysqlConnection::class,
+        ]);
+
+        $this->connectionManager->alias('test', 'default');
+
+        $this->connectionManager->alias('default', 'other');
+    }
+
+    public function testAliasMissingSource(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Database connection alias source `missing` is not valid.');
+
+        $this->connectionManager->alias('missing', 'default');
+    }
+
     public function testBuildInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -43,6 +79,37 @@ final class ConnectionManagerTest extends TestCase
 
         $this->assertFalse($this->connectionManager->isLoaded());
         $this->assertFalse($this->connectionManager->hasConfig());
+    }
+
+    public function testClearRemovesAliases(): void
+    {
+        $this->connectionManager->setConfig('test', [
+            'className' => TestMysqlConnection::class,
+        ]);
+        $this->connectionManager->alias('test', 'default');
+
+        $this->connectionManager->clear();
+
+        $this->assertSame([], $this->connectionManager->getAliases());
+    }
+
+    public function testDropAlias(): void
+    {
+        $this->connectionManager->unload('default');
+        $this->connectionManager->setConfig('default', [
+            'className' => TestMysqlConnection::class,
+        ]);
+        $this->connectionManager->setConfig('test', [
+            'className' => TestMysqlConnection::class,
+        ]);
+
+        $this->connectionManager->alias('test', 'default');
+        $test = $this->connectionManager->use();
+
+        $this->connectionManager->dropAlias('default');
+
+        $this->assertNotSame($test, $this->connectionManager->use());
+        $this->assertSame([], $this->connectionManager->getAliases());
     }
 
     public function testGetConfig(): void
@@ -137,6 +204,22 @@ final class ConnectionManagerTest extends TestCase
         $this->assertTrue(
             $this->connectionManager->isLoaded('other')
         );
+    }
+
+    public function testMissingAliasedConnection(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Database connection `` must extend `Fyre\DB\Connection`.');
+
+        $this->connectionManager->setConfig('test', [
+            'className' => TestMysqlConnection::class,
+        ]);
+
+        $this->connectionManager->alias('test', 'default');
+
+        $this->connectionManager->unload('test');
+
+        $this->connectionManager->use();
     }
 
     public function testSetConfig(): void

@@ -263,6 +263,69 @@ final class RedisQueueTest extends TestCase
         );
     }
 
+    public function testPrefixIsolatesQueues(): void
+    {
+        $options = $this->queueManager->getConfig('default');
+
+        $this->assertIsArray($options);
+
+        $first = $this->queueManager->build([
+            ...$options,
+            'prefix' => 'fyre:test:first:',
+        ]);
+        $second = $this->queueManager->build([
+            ...$options,
+            'prefix' => 'fyre:test:second:',
+        ]);
+
+        $message = new Message([
+            'className' => MockJob::class,
+            'queue' => 'prefix-test',
+            'unique' => true,
+            'retry' => false,
+        ]);
+
+        try {
+            $this->assertTrue($first->push($message));
+            $this->assertTrue($second->push($message));
+            $this->assertSame(['prefix-test'], $first->queues());
+            $this->assertSame(['prefix-test'], $second->queues());
+            $this->assertNotContains('prefix-test', $this->queue->queues());
+
+            $reserved = $first->pop('prefix-test');
+
+            $this->assertInstanceOf(Message::class, $reserved);
+
+            $first->fail($reserved);
+
+            $this->assertCount(1, $first->getFailed('prefix-test'));
+            $this->assertSame([], $second->getFailed('prefix-test'));
+            $this->assertSame(1, $first->stats('prefix-test')['failed']);
+            $this->assertSame(1, $second->stats('prefix-test')['queued']);
+
+            $id = array_key_first($first->getFailed('prefix-test'));
+
+            $this->assertIsString($id);
+            $this->assertTrue($first->retryFailed($id, 'prefix-test'));
+
+            $first->clear('prefix-test');
+            $first->reset('prefix-test');
+
+            $this->assertSame(0, $first->stats('prefix-test')['total']);
+            $this->assertSame(1, $second->stats('prefix-test')['total']);
+            $this->assertSame(1, $second->stats('prefix-test')['queued']);
+        } finally {
+            foreach ([$first, $second] as $queue) {
+                foreach (array_keys($queue->getFailed('prefix-test')) as $id) {
+                    $queue->forgetFailed($id, 'prefix-test');
+                }
+
+                $queue->clear('prefix-test');
+                $queue->reset('prefix-test');
+            }
+        }
+    }
+
     public function testReservationReleased(): void
     {
         $this->queue->push(new Message([

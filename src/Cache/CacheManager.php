@@ -218,6 +218,10 @@ class CacheManager
      */
     public function use(string $key = self::DEFAULT): Cacher
     {
+        if (!$this->enabled) {
+            return $this->build($this->config[$key] ?? []);
+        }
+
         return $this->instances[$key] ??= $this->build($this->config[$key] ?? []);
     }
 }

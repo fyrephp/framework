@@ -3,10 +3,48 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\TestSuite\Integration;
 
+use Fyre\Http\Exceptions\HttpException;
+use Fyre\Http\MiddlewareQueue;
+use Fyre\Http\MiddlewareRegistry;
 use PHPUnit\Framework\AssertionFailedError;
 
 trait ResponseCodeTrait
 {
+    public function testCleanupRestoresRendering(): void
+    {
+        $this->disableErrorRendering();
+        $this->disableErrorRendering();
+
+        $this->cleanup();
+
+        $this->get('/fail');
+
+        $this->assertResponseCode(500);
+    }
+
+    public function testExceptionsPropagate(): void
+    {
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessageIs('Internal Server Error');
+
+        $this->disableErrorRendering();
+
+        $this->get('/fail');
+    }
+
+    public function testExceptionsPropagateFromMiddlewareGroup(): void
+    {
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessageIs('Internal Server Error');
+
+        $this->app->use(MiddlewareRegistry::class)->group('web', ['error', 'router']);
+        $this->app->replaceInstance(MiddlewareQueue::class, new MiddlewareQueue(['web']));
+
+        $this->disableErrorRendering();
+
+        $this->get('/fail');
+    }
+
     public function testMultipleRequests(): void
     {
         $this->get('/response');
@@ -16,6 +54,26 @@ trait ResponseCodeTrait
         $this->get('/response');
 
         $this->assertResponseCode(200);
+    }
+
+    public function testRenderingCanBeEnabledAgain(): void
+    {
+        $this->disableErrorRendering();
+
+        try {
+            $this->get('/fail');
+
+            $this->fail('Expected the request exception to propagate.');
+        } catch (HttpException $e) {
+            $this->assertSame('Internal Server Error', $e->getMessage());
+        }
+
+        $this->enableErrorRendering();
+
+        $this->get('/fail');
+
+        $this->assertResponseCode(500);
+        $this->assertResponseContains('Internal Server Error');
     }
 
     public function testResponseCode(): void
