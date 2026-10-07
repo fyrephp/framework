@@ -2,6 +2,26 @@
 
 This file records user-visible changes to FyreFramework. Internal refactors, test-only changes, and other changes that do not affect users are omitted.
 
+## 1.2.0 - 2026-10-07
+
+### Added
+
+- Add database connection aliases and `ConnectionHelper` methods for configuring and checking test connections.
+- Add `QueueTestTrait`, `TestQueue`, and job assertions for capturing queued jobs without connecting to a broker or executing them.
+- Add `CacheTestTrait` for isolated in-memory caches with configuration and enabled-state restoration.
+- Add `IntegrationTestTrait::disableErrorRendering()` and `enableErrorRendering()` for testing exceptions through the existing error rendering event.
+- Add Redis queue prefixes for isolating messages, reservations, failures, uniqueness keys, statistics, and queue discovery.
+
+### Fixed
+
+- Clear redirect URI ports before removing their hosts in `Auth::getLoginUrl()`.
+- Return null cache handlers while caching is disabled, including when a real handler was loaded earlier, and preserve the loaded handler when caching is re-enabled.
+
+### Changed
+
+- Automatic fixtures now require configured `test` or `test_*` write connections. Configure connection aliases before application boot or resolving models.
+- Load and clean up fixture tables through each model's write connection, restoring foreign-key checks when setup or cleanup fails.
+
 ## 1.1.0 - 2026-09-27
 
 ### Added
