@@ -13,7 +13,10 @@ use Fyre\ORM\Model;
 use Fyre\ORM\ModelRegistry;
 use Fyre\ORM\Queries\SelectQuery;
 
+use function array_fill_keys;
 use function array_replace;
+use function in_array;
+use function is_string;
 use function password_hash;
 use function password_needs_rehash;
 use function password_verify;
@@ -74,7 +77,7 @@ class Identifier
     /**
      * Attempts to identify a user.
      *
-     * Note: If the stored password hash needs rehashing, it is upgraded and persisted before returning the user.
+     * Note: If the password changes during a rehash, the current hash is checked before returning the user.
      *
      * @param string $identifier The user identifier.
      * @param string $password The user password.
@@ -95,24 +98,41 @@ class Identifier
         $passwordField = $this->getPasswordField();
         $passwordHash = $user->get($passwordField);
 
-        if (!password_verify($password, $passwordHash)) {
+        if (!is_string($passwordHash) || !password_verify($password, $passwordHash)) {
             return null;
         }
 
-        if (password_needs_rehash($passwordHash, PASSWORD_DEFAULT)) {
-            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-            $user->set($passwordField, $passwordHash);
-
-            $Model = $this->getModel();
-
-            $primaryValues = $Model->getPrimaryKey() |> $user->extract(...);
-
-            $Model->updateAll([
-                $passwordField => $passwordHash,
-            ], $primaryValues);
+        if (!password_needs_rehash($passwordHash, PASSWORD_DEFAULT)) {
+            return $user;
         }
 
-        return $user;
+        $Model = $this->getModel();
+        $primaryValues = $Model->getPrimaryKey() |> $user->extract(...);
+
+        if ($primaryValues === [] || in_array(null, $primaryValues, true)) {
+            return null;
+        }
+
+        $newHash = password_hash($password, PASSWORD_DEFAULT);
+        $updated = $Model->updateAll(
+            [$passwordField => $newHash],
+            $primaryValues + [$passwordField => $passwordHash]
+        );
+
+        if ($updated) {
+            $user->set($passwordField, $newHash);
+
+            return $user;
+        }
+
+        $user = $this->findIdentity($primaryValues, connectionType: Model::WRITE);
+        $currentHash = $user?->get($passwordField);
+
+        if (!is_string($currentHash) || $currentHash === $passwordHash) {
+            return null;
+        }
+
+        return password_verify($password, $currentHash) ? $user : null;
     }
 
     /**
@@ -168,18 +188,33 @@ class Identifier
      */
     public function identifyBy(array $fields, mixed $value): Entity|null
     {
-        if ($fields === []) {
+        return $this->findIdentity(array_fill_keys($fields, $value), 'OR');
+    }
+
+    /**
+     * Finds an identity matching the field values and the configured query callback.
+     *
+     * @param array<int|string, mixed> $fieldValues The field values to match.
+     * @param string $conjunction The condition conjunction.
+     * @param string $connectionType The connection type.
+     * @return Entity|null The matching identity.
+     */
+    protected function findIdentity(
+        array $fieldValues,
+        string $conjunction = 'AND',
+        string $connectionType = Model::READ
+    ): Entity|null {
+        if ($fieldValues === []) {
             return null;
         }
 
         $Model = $this->getModel();
-
-        $conditions = new ConditionExpression('OR');
-        foreach ($fields as $field) {
-            $conditions->eq($Model->aliasField($field), $value);
+        $conditions = new ConditionExpression($conjunction);
+        foreach ($fieldValues as $field => $value) {
+            $conditions->eq($Model->aliasField((string) $field), $value);
         }
 
-        $query = $Model->find()->where($conditions);
+        $query = $Model->find(conditions: $conditions, connectionType: $connectionType);
 
         if ($this->queryCallback) {
             $query = ($this->queryCallback)($query);

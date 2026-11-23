@@ -6,6 +6,7 @@ namespace Tests\TestCase\Auth;
 use Fyre\Auth\Identifier;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Entities\User;
 use Tests\Mock\Models\UsersModel;
@@ -17,6 +18,17 @@ use function password_needs_rehash;
 final class IdentifierTest extends TestCase
 {
     use ConnectionTrait;
+
+    /**
+     * @return array<string, array{string, bool}>
+     */
+    public static function concurrentPasswordChangeProvider(): array
+    {
+        return [
+            'password reset' => ['new password', false],
+            'another login rehashed the same password' => ['test', true],
+        ];
+    }
 
     public function testAttempt(): void
     {
@@ -75,6 +87,38 @@ final class IdentifierTest extends TestCase
 
         $this->assertFalse(
             password_needs_rehash($password, PASSWORD_DEFAULT)
+        );
+    }
+
+    #[DataProvider('concurrentPasswordChangeProvider')]
+    public function testAttemptRehashWithConcurrentPasswordChange(string $password, bool $expectedLogin): void
+    {
+        $Users = $this->identifier->getModel();
+        $user = $this->identifier->identify('test@test.com');
+        $this->assertInstanceOf(User::class, $user);
+
+        $user->password = password_hash('test', PASSWORD_ARGON2I);
+        $Users->save($user);
+
+        $currentHash = password_hash($password, PASSWORD_DEFAULT);
+        $Users->getEventManager()->on('ORM.afterFind', static function() use ($Users, $user, $currentHash): void {
+            $Users->getEventManager()->off('ORM.afterFind');
+            $user->password = $currentHash;
+            $Users->save($user);
+        });
+
+        $authUser = $this->identifier->attempt('test@test.com', 'test');
+
+        if ($expectedLogin) {
+            $this->assertInstanceOf(User::class, $authUser);
+            $this->assertSame($currentHash, $authUser->password);
+        } else {
+            $this->assertNull($authUser);
+        }
+
+        $this->assertSame(
+            $currentHash,
+            $this->identifier->identify('test@test.com')?->get('password')
         );
     }
 
