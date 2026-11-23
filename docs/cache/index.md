@@ -126,6 +126,9 @@ Requires `ext-memcached` and a reachable Memcached server.
 | `host` | `string` | `127.0.0.1` |
 | `port` | `int\|string` | `11211` |
 | `weight` | `int` | `1` |
+| `flushServer` | `bool` | `false` |
+
+`clear()` throws a `CacheException` unless the prefix is empty and `flushServer` is `true`. A successful clear invalidates every item on the configured Memcached server, including other applications’ entries and active locks.
 
 ### Null handler
 

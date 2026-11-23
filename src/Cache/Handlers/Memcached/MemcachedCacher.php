@@ -33,6 +33,7 @@ class MemcachedCacher extends Cacher
         'host' => '127.0.0.1',
         'port' => 11211,
         'weight' => 1,
+        'flushServer' => false,
     ];
 
     /**
@@ -103,10 +104,16 @@ class MemcachedCacher extends Cacher
 
     /**
      * {@inheritDoc}
+     *
+     * @throws CacheException If the cache has a prefix or server flushing is disabled.
      */
     #[Override]
     public function clear(): bool
     {
+        if ($this->config['prefix'] !== '' || $this->config['flushServer'] !== true) {
+            throw new CacheException('Memcached cache clear requires an empty prefix and flushServer enabled.');
+        }
+
         return $this->connection->flush();
     }
 

@@ -9,6 +9,7 @@ use Fyre\Cache\Exceptions\CacheException;
 use Fyre\Cache\Handlers\Memcached\MemcachedCacher;
 use Fyre\Core\Container;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\Cache\Cacher\DecrementTestTrait;
@@ -41,6 +42,48 @@ final class MemcachedTest extends TestCase
 
     protected Cacher $cacher;
 
+    /**
+     * @return array<string, array{array<string, mixed>}>
+     */
+    public static function disallowedClearOptionsProvider(): array
+    {
+        return [
+            'default options' => [[]],
+            'prefixed cache' => [['prefix' => 'prefix.']],
+            'prefixed cache with flush enabled' => [['prefix' => 'prefix.', 'flushServer' => true]],
+            'zero prefix with flush enabled' => [['prefix' => '0', 'flushServer' => true]],
+            'non-boolean flush option' => [['flushServer' => 'false']],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $options The cache options.
+     */
+    #[DataProvider('disallowedClearOptionsProvider')]
+    public function testClearRequiresUnprefixedServerFlush(array $options): void
+    {
+        $cache = $this->cacheManager->build([
+            'className' => MemcachedCacher::class,
+            'host' => getenv('MEMCACHED_HOST'),
+            'port' => getenv('MEMCACHED_PORT'),
+            ...$options,
+        ]);
+
+        $this->assertTrue($this->cacher->set('test', 'value'));
+        $lock = $this->cacher->lock('test');
+        $this->assertTrue($lock->acquire());
+
+        $this->expectException(CacheException::class);
+        $this->expectExceptionMessageIs('Memcached cache clear requires an empty prefix and flushServer enabled.');
+
+        try {
+            $cache->clear();
+        } finally {
+            $this->assertSame('value', $this->cacher->get('test'));
+            $this->assertTrue($lock->release());
+        }
+    }
+
     public function testDebug(): void
     {
         $data = $this->cacher->__debugInfo();
@@ -50,10 +93,11 @@ final class MemcachedTest extends TestCase
                 '[class]' => MemcachedCacher::class,
                 'config' => [
                     'expire' => null,
-                    'prefix' => 'prefix.',
+                    'prefix' => '',
                     'host' => '[*****]',
                     'port' => '[*****]',
                     'weight' => 1,
+                    'flushServer' => true,
                     'className' => MemcachedCacher::class,
                 ],
                 'connection' => '[Memcached]',
@@ -123,7 +167,7 @@ final class MemcachedTest extends TestCase
             'className' => MemcachedCacher::class,
             'host' => getenv('MEMCACHED_HOST'),
             'port' => getenv('MEMCACHED_PORT'),
-            'prefix' => 'prefix.',
+            'flushServer' => true,
         ]);
     }
 
