@@ -329,6 +329,7 @@ Commonly used methods:
 
 - `attempt(string $identifier, string $password): Entity|null`
 - `identify(string $identifier): Entity|null`
+- `identifyBy(array $fields, mixed $value): Entity|null` — finds the first user matching the value in any of the supplied fields
 - `getIdentifierFields(): array`
 - `getModel(): Model`
 - `getPasswordField(): string`
@@ -338,7 +339,7 @@ Commonly used methods:
 - `identifierFields` (default `['email']`) — fields matched using an `or` condition when multiple fields are configured
 - `passwordField` (default `'password'`)
 - `modelAlias` (default `'Users'`)
-- `queryCallback` (default `null`) — optional callback to customize the `SelectQuery` used to identify the user
+- `queryCallback` (default `null`) — optional callback applied after the lookup conditions for password, remember-me, session, and bearer-token authentication. A filter here can exclude a suspended account even when it has an existing session or token.
 
 `Identifier::attempt()` returns `null` if either the identifier or password is empty, or if the credentials do not match. On successful login, it also upgrades and persists the stored password hash when rehashing is needed.
 

@@ -156,15 +156,27 @@ class Identifier
      */
     public function identify(string $identifier): Entity|null
     {
-        if ($this->identifierFields === []) {
+        return $this->identifyBy($this->identifierFields, $identifier);
+    }
+
+    /**
+     * Finds the first identity matching the value in any of the given fields.
+     *
+     * @param string[] $fields The identity model fields to match.
+     * @param mixed $value The value to match.
+     * @return Entity|null The matching identity after applying the configured query callback.
+     */
+    public function identifyBy(array $fields, mixed $value): Entity|null
+    {
+        if ($fields === []) {
             return null;
         }
 
         $Model = $this->getModel();
 
         $conditions = new ConditionExpression('OR');
-        foreach ($this->identifierFields as $identifierField) {
-            $conditions->eq($Model->aliasField($identifierField), $identifier);
+        foreach ($fields as $field) {
+            $conditions->eq($Model->aliasField($field), $value);
         }
 
         $query = $Model->find()->where($conditions);

@@ -173,12 +173,6 @@ class SessionAuthenticator extends Authenticator implements ImpersonationAuthent
             return null;
         }
 
-        $Model = $this->auth->identifier()->getModel();
-
-        return $Model->find()
-            ->where([
-                $Model->aliasField($this->config['sessionField']) => $id,
-            ])
-            ->first();
+        return $this->auth->identifier()->identifyBy([$this->config['sessionField']], $id);
     }
 }

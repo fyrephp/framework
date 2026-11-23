@@ -707,6 +707,28 @@ final class AuthenticatorTest extends TestCase
         $this->assertTrue($this->auth->isLoggedIn());
     }
 
+    public function testSessionAuthenticatorAppliesIdentifierQueryCallback(): void
+    {
+        $this->container->use(Config::class)->set(
+            'Auth.identifier.queryCallback',
+            static fn(SelectQuery $query): SelectQuery => $query->where(['Users.email IS NOT' => null])
+        );
+        $authenticator = $this->container->build(SessionAuthenticator::class, [
+            'auth' => $this->container->build(Auth::class),
+        ]);
+        $this->session->set('auth', 1);
+        $request = $this->container->build(ServerRequest::class);
+
+        $user = $authenticator->authenticate($request);
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(1, $user->id);
+
+        $user->email = null;
+        $this->identifier->getModel()->save($user);
+
+        $this->assertNull($authenticator->authenticate($request));
+    }
+
     public function testSessionAuthenticatorInvalidImpersonatorSessionKey(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -798,6 +820,33 @@ final class AuthenticatorTest extends TestCase
         );
 
         $this->assertTrue($this->auth->isLoggedIn());
+    }
+
+    public function testTokenAuthenticatorAppliesIdentifierQueryCallback(): void
+    {
+        $this->container->use(Config::class)->set(
+            'Auth.identifier.queryCallback',
+            static fn(SelectQuery $query): SelectQuery => $query->where(['Users.email IS NOT' => null])
+        );
+        $authenticator = $this->container->build(TokenAuthenticator::class, [
+            'auth' => $this->container->build(Auth::class),
+        ]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'headers' => [
+                    'Authorization' => 'Bearer Ew7tqx8kH6QsNe8SS0tVT0BX2LIRVQyl',
+                ],
+            ],
+        ]);
+
+        $user = $authenticator->authenticate($request);
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(1, $user->id);
+
+        $user->email = null;
+        $this->identifier->getModel()->save($user);
+
+        $this->assertNull($authenticator->authenticate($request));
     }
 
     public function testTokenAuthenticatorQuery(): void

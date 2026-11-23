@@ -63,12 +63,6 @@ class TokenAuthenticator extends Authenticator implements StatelessAuthenticator
             return null;
         }
 
-        $Model = $this->auth->identifier()->getModel();
-
-        return $Model->find()
-            ->where([
-                $Model->aliasField($this->config['tokenField']) => $token,
-            ])
-            ->first();
+        return $this->auth->identifier()->identifyBy([$this->config['tokenField']], $token);
     }
 }
