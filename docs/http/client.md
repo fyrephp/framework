@@ -95,7 +95,7 @@ You can seed the client's cookie jar with `addCookie($cookie)`. Use `getHandler(
 | `baseUrl` | `null` | base URL for resolving relative request URLs |
 | `headers` | `[]` | default request headers |
 | `auth` | `['type' => 'basic', 'username' => null, 'password' => null]` | authentication settings |
-| `proxy` | `['username' => null, 'password' => null]` | credentials used for `Proxy-Authorization` |
+| `proxy` | `['username' => null, 'password' => null]` | credentials cURL uses when connecting through a proxy |
 | `protocolVersion` | `1.1` | request protocol version (`1.0`, `1.1`, or `2.0`) |
 | `timeout` | `30` | timeout in seconds for handlers that support it |
 | `maxRedirects` | `0` | maximum redirects followed by `send()` and the verb methods |
@@ -233,6 +233,8 @@ Mock matching supports:
 ### Custom handlers
 
 To build a custom transport, extend `ClientHandler` and implement `send(RequestInterface $request, array $options = []): Response`.
+
+Custom transports receive configured proxy credentials in `$options['proxy']`. The default cURL handler sends an explicit `Proxy-Authorization` header only to a proxy. Configured proxy credentials take precedence when both are supplied.
 
 ## Testing
 

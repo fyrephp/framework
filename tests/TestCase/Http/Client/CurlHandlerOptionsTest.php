@@ -21,6 +21,9 @@ use const CURLOPT_HTTPHEADER;
 use const CURLOPT_POSTFIELDS;
 use const CURLOPT_PROTOCOLS;
 use const CURLOPT_PROTOCOLS_STR;
+use const CURLOPT_PROXYHEADER;
+use const CURLOPT_PROXYPASSWORD;
+use const CURLOPT_PROXYUSERNAME;
 use const CURLOPT_SSL_VERIFYPEER;
 use const CURLOPT_SSLCERT;
 use const CURLOPT_SSLCERTPASSWD;
@@ -87,6 +90,26 @@ final class CurlHandlerOptionsTest extends TestCase
         $this->assertSame(CURL_HTTP_VERSION_2_0, $this->options[CURLOPT_HTTP_VERSION]);
     }
 
+    public function testProxyCredentials(): void
+    {
+        $this->assertSame('test', $this->options[CURLOPT_PROXYUSERNAME]);
+        $this->assertSame('password', $this->options[CURLOPT_PROXYPASSWORD]);
+        $this->assertArrayNotHasKey(CURLOPT_PROXYHEADER, $this->options);
+    }
+
+    public function testProxyHeader(): void
+    {
+        $request = new Request('https://example.com/test')->withHeader('proxy-authorization', 'Bearer test');
+        $options = Closure::bind(
+            static fn(): array => CurlHandler::buildOptions($request),
+            null,
+            CurlHandler::class
+        )();
+
+        $this->assertSame(['Proxy-Authorization: Bearer test'], $options[CURLOPT_PROXYHEADER]);
+        $this->assertSame(['Host: example.com'], $options[CURLOPT_HTTPHEADER]);
+    }
+
     #[DataProvider('sslOptionProvider')]
     public function testSslOption(int $option, string $expected): void
     {
@@ -116,12 +139,17 @@ final class CurlHandlerOptionsTest extends TestCase
             'body' => 'value',
             'headers' => [
                 'Test' => 'header',
+                'Proxy-Authorization' => 'Bearer test',
             ],
             'protocolVersion' => '2.0',
         ]);
 
         $this->options = Closure::bind(
             static fn(): array => CurlHandler::buildOptions($request, [
+                'proxy' => [
+                    'username' => 'test',
+                    'password' => 'password',
+                ],
                 'timeout' => 5,
                 'ssl' => [
                     'cert' => '/path/to/cert',

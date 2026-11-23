@@ -162,6 +162,31 @@ final class ClientTest extends TestCase
         ]);
     }
 
+    public function testAuthDigestPassesProxyCredentialsToHandler(): void
+    {
+        $proxy = ['username' => 'proxy-user', 'password' => 'proxy-password'];
+        $challenge = new Response([
+            'statusCode' => 401,
+            'headers' => ['WWW-Authenticate' => 'Digest realm="test", nonce="nonce", qop="auth"'],
+        ]);
+        $response = new Response();
+        $handler = $this->createMock(ClientHandler::class);
+        $handler->expects($this->exactly(2))
+            ->method('send')
+            ->with(
+                $this->callback(static fn(RequestInterface $request): bool => !$request->hasHeader('Proxy-Authorization')),
+                $this->callback(static fn(array $options): bool => ($options['proxy'] ?? null) === $proxy)
+            )
+            ->willReturn($challenge, $response);
+
+        $client = new Client([
+            'handler' => $handler,
+            'auth' => ['type' => 'digest', 'username' => 'user', 'password' => 'password'],
+        ]);
+
+        $this->assertSame($response, $client->get('https://example.com/', options: ['proxy' => $proxy]));
+    }
+
     public function testBaseUrl(): void
     {
         $mockResponse = new Response();

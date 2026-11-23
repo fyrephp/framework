@@ -393,12 +393,7 @@ class Client implements ClientInterface
 
         $request = $this->requestFactory->createFromOptions($uri, $requestOptions);
 
-        $proxy = $options['proxy'] ?? [];
         $auth = $options['auth'] ?? [];
-
-        if (isset($proxy['username'], $proxy['password'])) {
-            $request = $request->withProxyAuth($proxy['username'], $proxy['password']);
-        }
 
         if (isset($auth['type'], $auth['username'], $auth['password'])) {
             switch ($auth['type']) {
@@ -406,7 +401,7 @@ class Client implements ClientInterface
                     $request = $request->withAuthBasic($auth['username'], $auth['password']);
                     break;
                 case 'digest':
-                    $response = $this->sendRequest($request);
+                    $response = $this->handler->send($request, ['proxy' => $options['proxy'] ?? []]);
 
                     if ($response->getStatusCode() === 401) {
                         $www = $response->getHeaderLine('WWW-Authenticate');

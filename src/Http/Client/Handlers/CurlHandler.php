@@ -50,6 +50,9 @@ use const CURLOPT_NOBODY;
 use const CURLOPT_POSTFIELDS;
 use const CURLOPT_PROTOCOLS;
 use const CURLOPT_PROTOCOLS_STR;
+use const CURLOPT_PROXYHEADER;
+use const CURLOPT_PROXYPASSWORD;
+use const CURLOPT_PROXYUSERNAME;
 use const CURLOPT_RETURNTRANSFER;
 use const CURLOPT_SSL_VERIFYPEER;
 use const CURLOPT_SSLCERT;
@@ -136,6 +139,7 @@ class CurlHandler extends ClientHandler
      * is forced back to GET using `CURLOPT_CUSTOMREQUEST`.
      *
      * Supported config keys:
+     * - `proxy` (array): Proxy credentials (`username`, `password`).
      * - `timeout` (int): The request timeout in seconds.
      * - `ssl` (array): SSL options (`cert`, `password`, `key`).
      * - `verifyPeer` (bool): Whether to verify the peer certificate.
@@ -165,7 +169,7 @@ class CurlHandler extends ClientHandler
             CURLOPT_HEADER => true,
             CURLOPT_HTTPHEADER => array_map(
                 static fn(string $name): string => $name.': '.$request->getHeaderLine($name),
-                $request->getHeaders() |> array_keys(...)
+                $request->withoutHeader('Proxy-Authorization')->getHeaders() |> array_keys(...)
             ),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -204,6 +208,13 @@ class CurlHandler extends ClientHandler
 
         if (isset($config['timeout'])) {
             $options[CURLOPT_TIMEOUT] = $config['timeout'];
+        }
+
+        if (isset($config['proxy']['username'], $config['proxy']['password'])) {
+            $options[CURLOPT_PROXYUSERNAME] = $config['proxy']['username'];
+            $options[CURLOPT_PROXYPASSWORD] = $config['proxy']['password'];
+        } else if ($request->hasHeader('Proxy-Authorization')) {
+            $options[CURLOPT_PROXYHEADER] = ['Proxy-Authorization: '.$request->getHeaderLine('Proxy-Authorization')];
         }
 
         if (isset($config['ssl'])) {

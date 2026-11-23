@@ -67,11 +67,8 @@ switch ($_SERVER['SCRIPT_NAME']) {
         echo 'test';
         break;
     case '/proxy':
-        $proxyAuth = $_SERVER['HTTP_PROXY_AUTHORIZATION'] ?? '';
-
-        if ($proxyAuth !== 'Basic '.base64_encode('test:password')) {
-            header('HTTP/1.1 401 Unauthorized');
-            exit;
+        if (isset($_SERVER['HTTP_PROXY_AUTHORIZATION'])) {
+            http_response_code(400);
         }
         break;
     case '/upload':

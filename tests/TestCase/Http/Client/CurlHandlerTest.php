@@ -163,7 +163,7 @@ final class CurlHandlerTest extends TestCase
         );
     }
 
-    public function testProxy(): void
+    public function testProxyCredentialsAreExcludedFromDirectRequests(): void
     {
         $response = new Client([
             'proxy' => [
@@ -172,13 +172,15 @@ final class CurlHandlerTest extends TestCase
             ],
         ])->get(self::$url.'/proxy');
 
-        $this->assertTrue(
-            $response->isOk()
-        );
+        $this->assertSame(200, $response->getStatusCode());
+    }
 
-        $this->assertTrue(
-            $response->isSuccess()
-        );
+    public function testProxyHeaderIsExcludedFromDirectRequests(): void
+    {
+        $request = new Request(self::$url.'/proxy')->withProxyAuth('test', 'password');
+        $response = new Client()->sendRequest($request);
+
+        $this->assertSame(200, $response->getStatusCode());
     }
 
     public function testSendNetworkException(): void
