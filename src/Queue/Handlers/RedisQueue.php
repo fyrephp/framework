@@ -304,53 +304,7 @@ class RedisQueue extends Queue
     #[Override]
     public function push(Message $message): bool
     {
-        if ($message->isExpired()) {
-            return false;
-        }
-
-        $queue = $message->getQueue();
-        $uniqueHash = $message->isUnique() ?
-            $message->getHash() :
-            null;
-
-        $payload = static::generateId()
-            .($uniqueHash ?? static::NO_UNIQUE_HASH)
-            .serialize($message);
-
-        $after = $message->isReady() ?
-            null :
-            $message->getAfter();
-
-        $result = $this->connection->eval(
-            <<<'LUA'
-                if ARGV[2] ~= '' then
-                    if redis.call('hsetnx', KEYS[1], ARGV[2], 1) == 0 then
-                        return 0
-                    end
-                end
-
-                if ARGV[3] ~= '' then
-                    redis.call('zadd', KEYS[3], ARGV[3], ARGV[1])
-                else
-                    redis.call('lpush', KEYS[2], ARGV[1])
-                    redis.call('incr', KEYS[4])
-                end
-
-                return 1
-                LUA,
-            [
-                $this->prepareKey($queue, 'unique'),
-                $this->prepareKey($queue),
-                $this->prepareKey($queue, 'delayed'),
-                $this->prepareKey($queue, 'total'),
-                $payload,
-                $uniqueHash ?? '',
-                $after === null ? '' : (string) $after,
-            ],
-            4
-        );
-
-        return (int) $result === 1;
+        return $this->enqueue($message, $message->getQueue());
     }
 
     /**
@@ -404,11 +358,7 @@ class RedisQueue extends Queue
             return false;
         }
 
-        if (!$this->push($failure->getMessage())) {
-            return false;
-        }
-
-        return $this->forgetFailed($id, $queue);
+        return $this->enqueue($failure->getMessage(), $queue, $id);
     }
 
     /**
@@ -424,6 +374,75 @@ class RedisQueue extends Queue
             'failed' => (int) ($this->prepareKey($queue, 'failed') |> $this->connection->get(...)),
             'total' => (int) ($this->prepareKey($queue, 'total') |> $this->connection->get(...)),
         ];
+    }
+
+    /**
+     * Enqueues a message and consumes its retained failure, if supplied, in the same Redis script.
+     *
+     * @param Message $message The message to enqueue.
+     * @param string $queue The queue name.
+     * @param string|null $failureId The failure that must still exist for a retry.
+     * @return bool Whether the message was enqueued.
+     */
+    protected function enqueue(Message $message, string $queue, string|null $failureId = null): bool
+    {
+        if ($message->isExpired()) {
+            return false;
+        }
+
+        $uniqueHash = $message->isUnique() ?
+            $message->getHash() :
+            null;
+
+        $payload = static::generateId()
+            .($uniqueHash ?? static::NO_UNIQUE_HASH)
+            .serialize($message);
+
+        $after = $message->isReady() ?
+            null :
+            $message->getAfter();
+
+        $result = $this->connection->eval(
+            <<<'LUA'
+                local failureId = ARGV[4]
+                if failureId and redis.call('hexists', KEYS[5], failureId) == 0 then
+                    return 0
+                end
+
+                if ARGV[2] ~= '' then
+                    if redis.call('hsetnx', KEYS[1], ARGV[2], 1) == 0 then
+                        return 0
+                    end
+                end
+
+                if ARGV[3] ~= '' then
+                    redis.call('zadd', KEYS[3], ARGV[3], ARGV[1])
+                else
+                    redis.call('lpush', KEYS[2], ARGV[1])
+                    redis.call('incr', KEYS[4])
+                end
+
+                if failureId then
+                    redis.call('hdel', KEYS[5], failureId)
+                end
+
+                return 1
+                LUA,
+            [
+                $this->prepareKey($queue, 'unique'),
+                $this->prepareKey($queue),
+                $this->prepareKey($queue, 'delayed'),
+                $this->prepareKey($queue, 'total'),
+                $this->prepareKey($queue, 'failures'),
+                $payload,
+                $uniqueHash ?? '',
+                $after === null ? '' : (string) $after,
+                ...($failureId === null ? [] : [$failureId]),
+            ],
+            5
+        );
+
+        return (int) $result === 1;
     }
 
     /**

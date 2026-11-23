@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Queue;
 
 use Closure;
+use Fiber;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Queue\FailedMessage;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 use Redis;
 use RuntimeException;
 use Tests\Mock\Jobs\MockJob;
+use Tests\Mock\Queue\PausingRedisQueue;
 
 use function array_key_first;
 use function array_keys;
@@ -460,6 +462,65 @@ final class RedisQueueTest extends TestCase
         );
 
         $this->queue->complete($message);
+    }
+
+    public function testRetryFailedConcurrently(): void
+    {
+        $this->queue->push(new Message([
+            'className' => MockJob::class,
+            'retry' => false,
+        ]));
+
+        $message = $this->queue->pop();
+        $this->assertInstanceOf(Message::class, $message);
+        $this->assertFalse($this->queue->fail($message));
+
+        $failures = $this->queue->getFailed();
+        $id = array_key_first($failures);
+
+        $this->assertIsString($id);
+
+        $options = $this->queueManager->getConfig('default');
+
+        $this->assertIsArray($options);
+
+        $otherQueue = $this->queueManager->build([
+            ...$options,
+            'className' => PausingRedisQueue::class,
+        ]);
+
+        $retry = new Fiber(static fn(): bool => $otherQueue->retryFailed($id));
+        $retry->start();
+        $this->assertTrue($this->queue->retryFailed($id));
+        $retry->resume();
+
+        $this->assertFalse($retry->getReturn());
+        $this->assertSame(1, $this->queue->stats()['queued']);
+        $this->assertSame([], $this->queue->getFailed());
+    }
+
+    public function testRetryFailedWithDuplicateUniqueMessage(): void
+    {
+        $message = new Message([
+            'className' => MockJob::class,
+            'retry' => false,
+            'unique' => true,
+        ]);
+
+        $this->assertTrue($this->queue->push($message));
+
+        $reserved = $this->queue->pop();
+        $this->assertInstanceOf(Message::class, $reserved);
+        $this->assertFalse($this->queue->fail($reserved));
+
+        $failures = $this->queue->getFailed();
+        $id = array_key_first($failures);
+
+        $this->assertIsString($id);
+        $this->assertTrue($this->queue->push($message));
+        $this->assertFalse($this->queue->retryFailed($id));
+        $this->assertArrayHasKey($id, $this->queue->getFailed());
+        $this->assertSame(1, $this->queue->stats()['queued']);
     }
 
     public function testUniqueMessageLifecycle(): void
