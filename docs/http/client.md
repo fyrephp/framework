@@ -81,7 +81,7 @@ Choose the send path according to which client behavior you need:
 | `send($request, $options = [])` | yes | yes | yes | yes |
 | `sendRequest($request)` | no | no | no | no |
 
-`sendRequest()` is the strict PSR-18 path and delegates directly to the configured handler.
+`sendRequest()` is the strict PSR-18 path and delegates directly to the configured handler. The default cURL handler requires an absolute HTTP or HTTPS URL with a host. The verb methods can resolve a relative URL against `baseUrl` before sending it.
 
 You can seed the client's cookie jar with `addCookie($cookie)`. Use `getHandler()` when you need direct access to the configured transport.
 

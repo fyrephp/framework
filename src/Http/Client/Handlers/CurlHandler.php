@@ -19,6 +19,7 @@ use function curl_exec;
 use function curl_getinfo;
 use function curl_init;
 use function curl_setopt_array;
+use function defined;
 use function explode;
 use function in_array;
 use function preg_match;
@@ -47,6 +48,8 @@ use const CURLOPT_HTTP_VERSION;
 use const CURLOPT_HTTPHEADER;
 use const CURLOPT_NOBODY;
 use const CURLOPT_POSTFIELDS;
+use const CURLOPT_PROTOCOLS;
+use const CURLOPT_PROTOCOLS_STR;
 use const CURLOPT_RETURNTRANSFER;
 use const CURLOPT_SSL_VERIFYPEER;
 use const CURLOPT_SSLCERT;
@@ -54,6 +57,8 @@ use const CURLOPT_SSLCERTPASSWD;
 use const CURLOPT_SSLKEY;
 use const CURLOPT_TIMEOUT;
 use const CURLOPT_URL;
+use const CURLPROTO_HTTP;
+use const CURLPROTO_HTTPS;
 
 /**
  * Provides a {@see ClientHandler} implementation using PHP's cURL extension. Builds a
@@ -74,7 +79,9 @@ class CurlHandler extends ClientHandler
 
         $handle = curl_init();
 
-        curl_setopt_array($handle, $options);
+        if (!curl_setopt_array($handle, $options)) {
+            throw new RequestException('Failed to set cURL request options.', $request);
+        }
 
         $output = curl_exec($handle);
 
@@ -136,11 +143,19 @@ class CurlHandler extends ClientHandler
      * @param RequestInterface $request The Request.
      * @param array<string, mixed> $config The config.
      * @return mixed[] The cURL options.
+     *
+     * @throws RequestException If the request URL is not an absolute HTTP or HTTPS URL.
      */
     protected static function buildOptions(RequestInterface $request, array $config = []): array
     {
+        $uri = $request->getUri();
+
+        if (!in_array($uri->getScheme(), ['http', 'https'], true) || $uri->getHost() === '') {
+            throw new RequestException('Request URL must be an absolute HTTP or HTTPS URL.', $request);
+        }
+
         $options = [
-            CURLOPT_URL => (string) $request->getUri(),
+            CURLOPT_URL => (string) $uri,
             CURLOPT_HTTP_VERSION => match ($request->getProtocolVersion()) {
                 '1.0' => CURL_HTTP_VERSION_1_0,
                 '1.1' => CURL_HTTP_VERSION_1_1,
@@ -155,6 +170,12 @@ class CurlHandler extends ClientHandler
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
         ];
+
+        if (defined('CURLOPT_PROTOCOLS_STR')) {
+            $options[CURLOPT_PROTOCOLS_STR] = 'http,https';
+        } else {
+            $options[CURLOPT_PROTOCOLS] = CURLPROTO_HTTP | CURLPROTO_HTTPS;
+        }
 
         $method = $request->getMethod();
         switch ($method) {

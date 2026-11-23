@@ -38,6 +38,18 @@ final class CurlHandlerTest extends TestCase
         ];
     }
 
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidRequestUrlProvider(): array
+    {
+        return [
+            'non-HTTP scheme' => ['ftp://example.invalid/'],
+            'missing scheme' => ['//example.invalid/path'],
+            'missing host' => ['https:/path'],
+        ];
+    }
+
     public function testAuthBasic(): void
     {
         $response = new Client([
@@ -181,10 +193,18 @@ final class CurlHandlerTest extends TestCase
     public function testSendRequestException(): void
     {
         $this->expectException(RequestException::class);
+        $this->expectExceptionMessageIs('Request URL must be an absolute HTTP or HTTPS URL.');
 
-        new Client()->get('foo://example.com', options: [
-            'timeout' => 1,
-        ]);
+        new Client()->get('foo://example.invalid');
+    }
+
+    #[DataProvider('invalidRequestUrlProvider')]
+    public function testSendRequestInvalidUrl(string $url): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessageIs('Request URL must be an absolute HTTP or HTTPS URL.');
+
+        new Client()->sendRequest(new Request($url));
     }
 
     public function testUncompressedResponse(): void

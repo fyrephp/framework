@@ -11,18 +11,24 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 
+use function defined;
+
 use const CURL_HTTP_VERSION_2_0;
 use const CURLOPT_CUSTOMREQUEST;
 use const CURLOPT_HEADER;
 use const CURLOPT_HTTP_VERSION;
 use const CURLOPT_HTTPHEADER;
 use const CURLOPT_POSTFIELDS;
+use const CURLOPT_PROTOCOLS;
+use const CURLOPT_PROTOCOLS_STR;
 use const CURLOPT_SSL_VERIFYPEER;
 use const CURLOPT_SSLCERT;
 use const CURLOPT_SSLCERTPASSWD;
 use const CURLOPT_SSLKEY;
 use const CURLOPT_TIMEOUT;
 use const CURLOPT_URL;
+use const CURLPROTO_HTTP;
+use const CURLPROTO_HTTPS;
 
 #[RequiresPhpExtension('curl')]
 final class CurlHandlerOptionsTest extends TestCase
@@ -42,6 +48,15 @@ final class CurlHandlerOptionsTest extends TestCase
             'password' => [CURLOPT_SSLCERTPASSWD, 'secret'],
             'key' => [CURLOPT_SSLKEY, '/path/to/key'],
         ];
+    }
+
+    public function testAllowedProtocols(): void
+    {
+        if (defined('CURLOPT_PROTOCOLS_STR')) {
+            $this->assertSame('http,https', $this->options[CURLOPT_PROTOCOLS_STR]);
+        } else {
+            $this->assertSame(CURLPROTO_HTTP | CURLPROTO_HTTPS, $this->options[CURLOPT_PROTOCOLS]);
+        }
     }
 
     public function testBody(): void
