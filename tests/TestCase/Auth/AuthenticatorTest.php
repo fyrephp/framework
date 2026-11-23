@@ -16,6 +16,7 @@ use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;
+use Fyre\ORM\Queries\SelectQuery;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -94,6 +95,19 @@ final class AuthenticatorTest extends TestCase
             'higher bcrypt cost' => [PASSWORD_BCRYPT, ['cost' => PASSWORD_BCRYPT_DEFAULT_COST + 1]],
             'argon2i' => [PASSWORD_ARGON2I, ['memory_cost' => 8192, 'time_cost' => 1, 'threads' => 1]],
             'argon2id' => [PASSWORD_ARGON2ID, ['memory_cost' => 8192, 'time_cost' => 1, 'threads' => 1]],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array{password?: false|string|null}}>
+     */
+    public static function invalidCookiePasswordFieldsProvider(): array
+    {
+        return [
+            'missing' => [[]],
+            'null' => [['password' => null]],
+            'empty' => [['password' => '']],
+            'non-string' => [['password' => false]],
         ];
     }
 
@@ -491,6 +505,39 @@ final class AuthenticatorTest extends TestCase
         $this->assertSame('test@test.com', $data[0]);
     }
 
+    /**
+     * @param array{password?: false|string|null} $fields
+     */
+    #[DataProvider('invalidCookiePasswordFieldsProvider')]
+    public function testCookieAuthenticatorLoginRememberWithoutPassword(array $fields): void
+    {
+        $authenticator = $this->container->build(CookieAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $user = $this->identifier->identify('test@test.com');
+        $this->assertInstanceOf(User::class, $user);
+
+        if ($fields === []) {
+            $user->unset('password');
+        } else {
+            $user->set('password', $fields['password']);
+        }
+
+        $this->auth->login($user, true);
+
+        $queue = new MiddlewareQueue(['auth']);
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class);
+        $response = $handler->handle($request);
+
+        [$cookieString] = $response->getHeader('Set-Cookie');
+        $cookie = Cookie::createFromHeaderString($cookieString);
+
+        $this->assertSame('auth', $cookie->getName());
+        $this->assertSame('', $cookie->getValue());
+        $this->assertTrue($cookie->isExpired());
+    }
+
     public function testCookieAuthenticatorLogout(): void
     {
         $authenticator = $this->container->build(CookieAuthenticator::class);
@@ -556,6 +603,39 @@ final class AuthenticatorTest extends TestCase
 
         $this->assertInstanceOf(User::class, $user);
         $this->assertSame(1, $this->session->get('auth'));
+    }
+
+    public function testCookieAuthenticatorRequiresSelectedPasswordField(): void
+    {
+        $user = $this->identifier->identify('test@test.com');
+        $this->assertInstanceOf(User::class, $user);
+
+        $options = ['passwordField' => 'token', 'salt' => 'secret'];
+        $authenticator = $this->container->build(CookieAuthenticator::class, ['options' => $options]);
+        $authenticator->login($user, true);
+
+        $response = $authenticator->beforeResponse(new ClientResponse());
+        [$cookieString] = $response->getHeader('Set-Cookie');
+        $cookie = Cookie::createFromHeaderString($cookieString);
+        $request = $this->container->build(ServerRequest::class)->withCookieParams(['auth' => $cookie->getValue()]);
+
+        $this->assertInstanceOf(User::class, $authenticator->authenticate($request));
+
+        $this->container->use(Config::class)->set(
+            'Auth.identifier.queryCallback',
+            static fn(SelectQuery $query): SelectQuery => $query->select(['id', 'email', 'password'])
+        );
+        $authenticator = $this->container->build(CookieAuthenticator::class, [
+            'auth' => $this->container->build(Auth::class),
+            'options' => $options,
+        ]);
+
+        $this->assertNull($authenticator->authenticate($request));
+
+        $response = $authenticator->beforeResponse(new ClientResponse());
+        [$cookieString] = $response->getHeader('Set-Cookie');
+        $cookie = Cookie::createFromHeaderString($cookieString);
+        $this->assertTrue($cookie->isExpired());
     }
 
     public function testDebug(): void

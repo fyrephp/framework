@@ -168,7 +168,7 @@ Reads a remember-me cookie and validates it against the stored user. Login can q
 - `cookieName` (`string`): the cookie name (default: `'auth'`).
 - `cookieOptions` (`array<string, mixed>`): options passed to `Cookie` (default: `['httpOnly' => true]`).
 - `identifierField` (`string`): the user field stored in the cookie (default: `'email'`).
-- `passwordField` (`string`): the password-hash field used to invalidate old cookies after password changes (default: `'password'`).
+- `passwordField` (`string`): the password-hash field (default: `'password'`). Include it in custom identity queries. Issuing and verifying remember-me cookies requires a non-empty string in this field. A missing or empty hash clears the cookie.
 - `salt` (`string|null`): an optional secret HMAC key included when deriving the cookie token (default: `null`).
 
 Within `CookieAuthenticator`, `cookieOptions.expires` is a lifetime in seconds and is converted to an absolute expiry when the cookie is written. If it is omitted, the result is a browser-session cookie. Set `cookieOptions.secure` to `true` when the application uses HTTPS.

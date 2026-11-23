@@ -111,7 +111,7 @@ class CookieAuthenticator extends Authenticator
 
         $token = $this->createToken($user);
 
-        if (!password_verify($token, $tokenHash)) {
+        if ($token === null || !password_verify($token, $tokenHash)) {
             $this->logout();
 
             return null;
@@ -128,37 +128,30 @@ class CookieAuthenticator extends Authenticator
     #[Override]
     public function beforeResponse(ResponseInterface $response, Entity|null $user = null): ResponseInterface
     {
-        if ($this->sendCookie === false) {
-            $cookieOptions = $this->config['cookieOptions'];
-            $cookieOptions['expires'] = 1;
-
-            return $response->withAddedHeader(
-                'Set-Cookie',
-                new Cookie($this->config['cookieName'], '', $cookieOptions)->toHeaderString()
-            );
+        if ($this->sendCookie === null) {
+            return $response;
         }
 
-        if ($this->cookieUser && $this->sendCookie === true) {
-            $identifier = $this->cookieUser->get($this->config['identifierField']);
+        $cookieOptions = $this->config['cookieOptions'];
+        $value = '';
 
-            $token = $this->createToken($this->cookieUser);
+        if ($this->cookieUser && ($token = $this->createToken($this->cookieUser)) !== null) {
+            $identifier = $this->cookieUser->get($this->config['identifierField']);
             $tokenHash = password_hash($token, PASSWORD_DEFAULT);
 
             $value = (string) json_encode([$identifier, $tokenHash]) |> rawurlencode(...);
 
-            $cookieOptions = $this->config['cookieOptions'];
-
             if (isset($cookieOptions['expires'])) {
                 $cookieOptions['expires'] += time();
             }
-
-            return $response->withAddedHeader(
-                'Set-Cookie',
-                new Cookie($this->config['cookieName'], $value, $cookieOptions)->toHeaderString()
-            );
+        } else {
+            $cookieOptions['expires'] = 1;
         }
 
-        return $response;
+        return $response->withAddedHeader(
+            'Set-Cookie',
+            new Cookie($this->config['cookieName'], $value, $cookieOptions)->toHeaderString()
+        );
     }
 
     /**
@@ -195,12 +188,16 @@ class CookieAuthenticator extends Authenticator
      * is configured) keeps the token within bcrypt's 72-byte limit.
      *
      * @param Entity $user The Entity.
-     * @return string The token.
+     * @return string|null The token, or null if the stored password hash is missing or empty.
      */
-    protected function createToken(Entity $user): string
+    protected function createToken(Entity $user): string|null
     {
         $identifier = $user->get($this->config['identifierField']);
         $password = $user->get($this->config['passwordField']);
+
+        if (!is_string($password) || $password === '') {
+            return null;
+        }
 
         $value = $identifier.$password;
 
