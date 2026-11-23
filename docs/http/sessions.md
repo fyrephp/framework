@@ -167,8 +167,11 @@ Implemented by `FileSessionHandler`.
 
 Stores one file per session under `Session.path`. The stored filename is `prefix + sessionId`.
 
+On Unix, use a dedicated directory owned by the PHP worker. The handler creates missing directories with mode `0700`.
+
+To create new session files with mode `0600`, start the PHP worker with a umask of `0077`. This mask also applies to other files the worker creates.
+
 Notes:
-- The session directory is created automatically when missing.
 - Writes use `LOCK_EX` to reduce race conditions.
 - Missing session files read as an empty string (errors are suppressed).
 - Garbage collection removes only expired regular files whose names match the configured prefix followed by a valid session ID. Symbolic links are skipped.

@@ -11,25 +11,32 @@ use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
+use function bin2hex;
 use function clearstatcache;
 use function fclose;
 use function file_put_contents;
 use function filemtime;
+use function fileperms;
 use function flock;
 use function fopen;
 use function glob;
+use function is_dir;
 use function mkdir;
+use function random_bytes;
 use function rmdir;
 use function session_id;
 use function session_start;
 use function session_write_close;
+use function sys_get_temp_dir;
 use function time;
 use function touch;
+use function umask;
 use function unlink;
 
 use const LOCK_EX;
 use const LOCK_NB;
 use const LOCK_UN;
+use const PHP_OS_FAMILY;
 
 final class FileTest extends TestCase
 {
@@ -151,6 +158,28 @@ final class FileTest extends TestCase
         );
 
         $this->assertFileExists('sessions/notes.txt');
+    }
+
+    public function testOpenCreatesPrivateDirectory(): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            $this->markTestSkipped('This test requires Unix directory permissions.');
+        }
+
+        $suffix = random_bytes(8) |> bin2hex(...);
+        $path = sys_get_temp_dir().'/fyre-session-'.$suffix;
+        $previousMask = umask(0022);
+
+        try {
+            $this->assertTrue($this->handler->open($path, ''));
+            $this->assertSame(0700, fileperms($path) & 0777);
+        } finally {
+            umask($previousMask);
+
+            if (is_dir($path)) {
+                rmdir($path);
+            }
+        }
     }
 
     public function testOperationLocksAreReleased(): void
