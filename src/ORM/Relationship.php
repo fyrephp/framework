@@ -370,10 +370,13 @@ abstract class Relationship
      */
     public function getTarget(): Model
     {
-        /**
-         * @var TTarget
-         */
-        return $this->target ??= $this->modelRegistry->use($this->name, $this->classAlias);
+        if (!isset($this->target)) {
+            /** @var TTarget $target */
+            $target = $this->modelRegistry->use($this->name, $this->classAlias);
+            $this->target = $target;
+        }
+
+        return $this->target;
     }
 
     /**

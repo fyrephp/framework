@@ -200,10 +200,13 @@ class ManyToMany extends Relationship
      */
     public function getJunction(): Model
     {
-        /**
-         * @var TJunction
-         */
-        return $this->junction ??= $this->modelRegistry->use($this->through);
+        if ($this->junction === null) {
+            /** @var TJunction $junction */
+            $junction = $this->modelRegistry->use($this->through);
+            $this->junction = $junction;
+        }
+
+        return $this->junction;
     }
 
     /**
