@@ -8,6 +8,7 @@ use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Handlers\Sqlite\SqliteConnection;
 use Fyre\Event\Event;
 use PHPUnit\Framework\TestCase;
+use Tests\TestCase\DB\Shared\ConnectionRetryTestTrait;
 use Tests\TestCase\DB\Shared\LockTestTrait;
 
 use function file_get_contents;
@@ -15,6 +16,7 @@ use function preg_quote;
 
 final class ConnectionTest extends TestCase
 {
+    use ConnectionRetryTestTrait;
     use LockTestTrait;
     use QuoteIdentifierTestTrait;
     use SqliteConnectionTrait;

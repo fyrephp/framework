@@ -8,6 +8,7 @@ use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Handlers\Postgres\PostgresConnection;
 use Fyre\Event\Event;
 use PHPUnit\Framework\TestCase;
+use Tests\TestCase\DB\Shared\ConnectionRetryTestTrait;
 use Tests\TestCase\DB\Shared\LockTestTrait;
 
 use function file_get_contents;
@@ -15,6 +16,7 @@ use function preg_quote;
 
 final class ConnectionTest extends TestCase
 {
+    use ConnectionRetryTestTrait;
     use LockTestTrait;
     use PostgresConnectionTrait;
     use QuoteIdentifierTestTrait;
@@ -57,7 +59,6 @@ final class ConnectionTest extends TestCase
                 'logManager' => '[Fyre\Log\LogManager]',
                 'logQueries' => false,
                 'pdo' => '[Pdo\Pgsql]',
-                'retry' => '[Fyre\DB\ConnectionRetry]',
                 'savePointLevel' => 0,
                 'schema' => '[*****]',
                 'useSavePoints' => true,

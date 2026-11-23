@@ -276,9 +276,19 @@ For manual control, use `begin()`, `commit()`, and `rollback()`. Nested transact
 
 ## Connection retries
 
-Query execution recognizes a small set of driver-specific connection errors. Outside a transaction, the connection waits `100` milliseconds, reconnects, and retries the operation once. Queries are not retried while a transaction or savepoint is active because reconnecting would lose its state.
+Outside a transaction, a recognized disconnect during statement preparation causes the connection to wait `100` milliseconds, reconnect, and retry preparation once. If the connection drops during execution, the default behavior is to throw a `DbException`. For a write, the server may already have committed the change.
 
-This behavior applies to `execute()` and `rawQuery()`, including normal query-builder execution. The initial connection attempt made during construction is not retried.
+Pass `retrySafe: true` when the entire operation can safely run twice. This option is available on `Connection::execute()`, `query()`, `rawQuery()`, and the query builder's `execute()`. Raw SQL goes directly to execution. An active transaction or savepoint disables retries even with this option.
+
+```php
+$user = $db->select(['name'])
+    ->from('users')
+    ->where(['id' => $id])
+    ->execute(retrySafe: true)
+    ->first();
+```
+
+For an ORM lookup, `$Users->find(retrySafe: true)->where(['Users.id' => $id])->first()` enables execution retries for that query. The same option applies to `all()` and `count()`.
 
 ## Database locks
 

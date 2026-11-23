@@ -372,15 +372,16 @@ abstract class Connection
      *
      * @param string $sql The SQL query.
      * @param array<int|string, mixed> $params The parameters to bind.
+     * @param bool $retrySafe Whether execution can be repeated after a disconnect.
      * @return ResultSet The new ResultSet instance.
      *
      * @throws MissingConnectionException If the connection is not valid.
      * @throws DbException If the query threw an error.
      */
-    public function execute(string $sql, array $params): ResultSet
+    public function execute(string $sql, array $params, bool $retrySafe = false): ResultSet
     {
         try {
-            return $this->retry()->run(function() use ($sql, $params) {
+            $prepare = function() use ($sql, $params): PDOStatement {
                 if (!$this->pdo) {
                     throw new MissingConnectionException();
                 }
@@ -427,8 +428,10 @@ abstract class Connection
                     $this->logManager->handle('debug', $logMessage, scope: 'queries');
                 }
 
-                $query = $this->pdo->prepare($sql);
+                return $this->pdo->prepare($sql) ?: throw new DbException('Failed to prepare the statement.');
+            };
 
+            $execute = function(PDOStatement $query) use ($params): ResultSet {
                 if (array_is_list($params)) {
                     $query->execute($params);
                 } else {
@@ -452,7 +455,13 @@ abstract class Connection
                 }
 
                 return $this->result($query);
-            });
+            };
+
+            if ($retrySafe) {
+                return $this->retry()->run(static fn(): ResultSet => $prepare() |> $execute);
+            }
+
+            return $this->retry()->run($prepare) |> $execute;
         } catch (PDOException $e) {
             throw new DbException(sprintf(
                 'Database connection error: %s',
@@ -590,11 +599,12 @@ abstract class Connection
      * Executes a SQL query.
      *
      * @param string $sql The SQL query.
+     * @param bool $retrySafe Whether execution can be repeated after a disconnect.
      * @return ResultSet The new ResultSet instance.
      */
-    public function query(string $sql): ResultSet
+    public function query(string $sql, bool $retrySafe = false): ResultSet
     {
-        return $this->rawQuery($sql) |> $this->result(...);
+        return $this->rawQuery($sql, $retrySafe) |> $this->result(...);
     }
 
     /**
@@ -681,15 +691,16 @@ abstract class Connection
      * Executes a raw SQL query.
      *
      * @param string $sql The SQL query.
+     * @param bool $retrySafe Whether execution can be repeated after a disconnect.
      * @return PDOStatement The PDOStatement instance containing the raw result.
      *
      * @throws MissingConnectionException If the connection is not valid.
      * @throws DbException If the query threw an error.
      */
-    public function rawQuery(string $sql): PDOStatement
+    public function rawQuery(string $sql, bool $retrySafe = false): PDOStatement
     {
         try {
-            return $this->retry()->run(function() use ($sql) {
+            $execute = function() use ($sql): PDOStatement {
                 if (!$this->pdo) {
                     throw new MissingConnectionException();
                 }
@@ -700,8 +711,10 @@ abstract class Connection
                     $this->logManager->handle('debug', $sql, scope: 'queries');
                 }
 
-                return $this->pdo->query($sql);
-            });
+                return $this->pdo->query($sql) ?: throw new DbException('Failed to execute the query.');
+            };
+
+            return $retrySafe ? $this->retry()->run($execute) : $execute();
         } catch (PDOException $e) {
             throw new DbException(sprintf(
                 'Database error: %s',

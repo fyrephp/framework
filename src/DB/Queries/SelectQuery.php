@@ -108,9 +108,9 @@ class SelectQuery extends Query
      * {@inheritDoc}
      */
     #[Override]
-    public function execute(ValueBinder|null $binder = null): ResultSet
+    public function execute(ValueBinder|null $binder = null, bool $retrySafe = false): ResultSet
     {
-        $result = parent::execute($binder);
+        $result = parent::execute($binder, $retrySafe);
 
         if ($this->groupLimit !== null) {
             return $result->decorate(static function(array $row): array {

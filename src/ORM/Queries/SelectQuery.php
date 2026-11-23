@@ -8,6 +8,7 @@ use Closure;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\DB\Pagination\CursorPage;
+use Fyre\DB\ResultSet;
 use Fyre\DB\ValueBinder;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
@@ -144,6 +145,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
         $options['subquery'] ??= false;
         $options['connectionType'] ??= Model::READ;
         $options['events'] ??= true;
+        $options['retrySafe'] ??= false;
 
         $this->alias = $options['alias'];
         $this->autoAlias = !$options['subquery'];
@@ -243,7 +245,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 ->from([
                     'count_source' => $query->orderBy([], true),
                 ])
-                ->execute()
+                ->execute(retrySafe: $this->options['retrySafe'])
                 ->first()['count'] ?? 0;
         }
 
@@ -304,6 +306,15 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
         $this->dirty();
 
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function execute(ValueBinder|null $binder = null, bool|null $retrySafe = null): ResultSet
+    {
+        return parent::execute($binder, $retrySafe ?? $this->options['retrySafe']);
     }
 
     /**

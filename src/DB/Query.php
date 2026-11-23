@@ -90,12 +90,13 @@ abstract class Query implements Stringable
      * A successful execution resets the query dirty state.
      *
      * @param ValueBinder|null $binder The ValueBinder to use.
+     * @param bool $retrySafe Whether execution can be repeated after a disconnect.
      * @return ResultSet The new ResultSet instance.
      *
      * @throws Exceptions\MissingConnectionException If the connection is not valid.
      * @throws DbException If the query threw an error.
      */
-    public function execute(ValueBinder|null $binder = null): ResultSet
+    public function execute(ValueBinder|null $binder = null, bool $retrySafe = false): ResultSet
     {
         if ($this->useBinder) {
             $binder ??= new ValueBinder();
@@ -107,7 +108,7 @@ abstract class Query implements Stringable
             $binder->bindings() :
             [];
 
-        $result = $this->connection->execute($query, $bindings);
+        $result = $this->connection->execute($query, $bindings, $retrySafe);
 
         $this->dirty = false;
 

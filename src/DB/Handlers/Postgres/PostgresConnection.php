@@ -155,7 +155,7 @@ class PostgresConnection extends Connection
     #[Override]
     public function getCharset(): string
     {
-        return (string) $this->rawQuery('SHOW CLIENT_ENCODING')->fetchColumn();
+        return (string) $this->rawQuery('SHOW CLIENT_ENCODING', retrySafe: true)->fetchColumn();
     }
 
     /**

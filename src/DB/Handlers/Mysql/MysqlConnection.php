@@ -190,7 +190,7 @@ class MysqlConnection extends Connection
     #[Override]
     public function getCharset(): string
     {
-        return (string) $this->rawQuery('SELECT @@character_set_client')->fetchColumn();
+        return (string) $this->rawQuery('SELECT @@character_set_client', retrySafe: true)->fetchColumn();
     }
 
     /**
@@ -200,7 +200,7 @@ class MysqlConnection extends Connection
      */
     public function getCollation(): string
     {
-        return (string) $this->rawQuery('SELECT @@collation_connection')->fetchColumn();
+        return (string) $this->rawQuery('SELECT @@collation_connection', retrySafe: true)->fetchColumn();
     }
 
     /**
