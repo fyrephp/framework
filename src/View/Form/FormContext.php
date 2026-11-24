@@ -132,9 +132,7 @@ class FormContext extends Context
     #[Override]
     public function getStep(string $key): float|string|null
     {
-        $schema = $this->item->getSchema();
-
-        return static::getSchemaStep($schema, $key);
+        return $this->item->getSchema() |> static::getSchemaStep(?, $key);
     }
 
     /**
@@ -143,9 +141,7 @@ class FormContext extends Context
     #[Override]
     public function getType(string $key): string
     {
-        $schema = $this->item->getSchema();
-
-        return static::getSchemaType($schema, $key);
+        return $this->item->getSchema() |> static::getSchemaType(?, $key);
     }
 
     /**
@@ -163,8 +159,6 @@ class FormContext extends Context
     #[Override]
     public function isRequired(string $key): bool
     {
-        $validator = $this->item->getValidator();
-
-        return static::isValidationRequired($validator, $key);
+        return $this->item->getValidator() |> static::isValidationRequired(?, $key);
     }
 }

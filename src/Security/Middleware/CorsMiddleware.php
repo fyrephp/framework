@@ -50,9 +50,8 @@ class CorsMiddleware implements MiddlewareInterface
         }
 
         if ($this->cors->isPreflightRequest($request)) {
-            $response = $this->responseFactory->createResponse(204);
-
-            return $this->cors->addHeadersPreflight($request, $response);
+            return $this->responseFactory->createResponse(204)
+                |> $this->cors->addHeadersPreflight($request, ?);
         }
 
         return $this->cors->addHeaders($request, $handler->handle($request));

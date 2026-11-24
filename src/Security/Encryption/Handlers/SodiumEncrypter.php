@@ -98,8 +98,7 @@ class SodiumEncrypter extends Encrypter
     public function encrypt(mixed $data, string $key): string
     {
         $nonce = $this->generateKey(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-        $data = serialize($data);
-        $data = sodium_pad($data, $this->config['blockSize']);
+        $data = serialize($data) |> sodium_pad(?, $this->config['blockSize']);
         $secret = $this->generateSecret($key, SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
 
         try {

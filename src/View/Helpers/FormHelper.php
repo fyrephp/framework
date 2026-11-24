@@ -164,9 +164,10 @@ class FormHelper extends Helper
             ]);
         }
 
-        $attributes = static::cleanAttributes($attributes);
-
-        $result .= $this->formBuilder->input(attributes: $attributes);
+        $result .= static::cleanAttributes($attributes)
+            |> $this->formBuilder->input(
+                attributes: ?
+            );
 
         return $result;
     }
@@ -227,9 +228,9 @@ class FormHelper extends Helper
             unset($attributes['value']);
         }
 
-        $attributes = static::cleanAttributes($attributes);
-
-        return $this->formBuilder->input(attributes: $attributes);
+        return static::cleanAttributes($attributes) |> $this->formBuilder->input(
+            attributes: ?
+        );
     }
 
     /**
@@ -268,9 +269,9 @@ class FormHelper extends Helper
             unset($attributes['value']);
         }
 
-        $attributes = static::cleanAttributes($attributes);
-
-        return $this->formBuilder->input(attributes: $attributes);
+        return static::cleanAttributes($attributes) |> $this->formBuilder->input(
+            attributes: ?
+        );
     }
 
     /**
@@ -454,9 +455,9 @@ class FormHelper extends Helper
             $attributes['value'] = $parser->parse($attributes['value']);
         }
 
-        $attributes = static::cleanAttributes($attributes);
-
-        return $this->formBuilder->input(attributes: $attributes);
+        return static::cleanAttributes($attributes) |> $this->formBuilder->input(
+            attributes: ?
+        );
     }
 
     /**
@@ -585,9 +586,9 @@ class FormHelper extends Helper
 
         $attributes['checked'] = $parser->parse($attributes['checked']);
 
-        $attributes = static::cleanAttributes($attributes);
-
-        return $this->formBuilder->input(attributes: $attributes);
+        return static::cleanAttributes($attributes) |> $this->formBuilder->input(
+            attributes: ?
+        );
     }
 
     /**
@@ -687,12 +688,11 @@ class FormHelper extends Helper
             $attributes['name'] .= '[]';
         }
 
-        $attributes = static::cleanAttributes($attributes);
-
-        $result .= $this->formBuilder->select(
-            attributes: $attributes,
-            options: $options
-        );
+        $result .= static::cleanAttributes($attributes)
+            |> $this->formBuilder->select(
+                options: $options,
+                attributes: ?
+            );
 
         return $result;
     }
@@ -773,9 +773,9 @@ class FormHelper extends Helper
             $attributes['value'] = $parser->parse($attributes['value']);
         }
 
-        $attributes = static::cleanAttributes($attributes);
-
-        return $this->formBuilder->input(attributes: $attributes);
+        return static::cleanAttributes($attributes) |> $this->formBuilder->input(
+            attributes: ?
+        );
     }
 
     /**
@@ -801,9 +801,9 @@ class FormHelper extends Helper
             $attributes['value'] = $parser->parse($attributes['value']);
         }
 
-        $attributes = static::cleanAttributes($attributes);
-
-        return $this->formBuilder->textarea(attributes: $attributes);
+        return static::cleanAttributes($attributes) |> $this->formBuilder->textarea(
+            attributes: ?
+        );
     }
 
     /**
@@ -834,9 +834,9 @@ class FormHelper extends Helper
             unset($attributes['value']);
         }
 
-        $attributes = static::cleanAttributes($attributes);
-
-        return $this->formBuilder->input(attributes: $attributes);
+        return static::cleanAttributes($attributes) |> $this->formBuilder->input(
+            attributes: ?
+        );
     }
 
     /**
@@ -1009,9 +1009,7 @@ class FormHelper extends Helper
      */
     protected static function getKey(string $name): string
     {
-        $key = (string) preg_replace('/\[(.*?)\]/', '.\1', $name);
-
-        return trim($key, '.');
+        return ((string) preg_replace('/\[(.*?)\]/', '.\1', $name)) |> trim(?, '.');
     }
 
     /**

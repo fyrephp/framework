@@ -24,9 +24,9 @@ trait MagicTestTrait
     public static function toJsonTemporalValueProvider(): array
     {
         return [
-            'date' => [static fn(): Date => Date::createFromArray([2022, 1, 1]), '2022-01-01'],
+            'date' => [Date::createFromArray([2022, 1, 1], ...), '2022-01-01'],
             'date time' => [static fn(): DateTime => new DateTime('2022-01-01'), '2022-01-01T00:00:00.000+00:00'],
-            'time' => [static fn(): Time => Time::createFromArray([12, 30, 15]), '12:30:15'],
+            'time' => [Time::createFromArray([12, 30, 15], ...), '12:30:15'],
         ];
     }
 

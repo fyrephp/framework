@@ -385,7 +385,8 @@ abstract class QueryGenerator
                 ->when($filter, $argument);
         }
 
-        $arguments = array_map($this->parseExpression(?, $binder), $arguments);
+        $argumentsSql = array_map($this->parseExpression(?, $binder), $arguments)
+            |> implode(', ', ?);
 
         $query = $aggregate->getName().'(';
 
@@ -393,7 +394,7 @@ abstract class QueryGenerator
             $query .= 'DISTINCT ';
         }
 
-        return $query.implode(', ', $arguments).')';
+        return $query.$argumentsSql.')';
     }
 
     /**
@@ -484,9 +485,9 @@ abstract class QueryGenerator
                 ));
             }
 
-            $values = array_map($this->parseExpression(?, $binder), $value);
+            $valuesSql = array_map($this->parseExpression(?, $binder), $value) |> implode(', ', ?);
 
-            return $field.' '.$operator.' ('.implode(', ', $values).')';
+            return $field.' '.$operator.' ('.$valuesSql.')';
         }
 
         return $field.' '.$operator.' '.$this->parseExpression($value, $binder);
@@ -596,8 +597,8 @@ abstract class QueryGenerator
 
                 if (preg_match('/\A(.+?)\s+((?:NOT\s+)?IN)\z/i', $field, $match)) {
                     $field = $match[1];
-                    $comparison = strtoupper($match[2]);
-                    $comparison = (string) preg_replace('/\s+/', ' ', $comparison);
+                    $comparison = (string) (strtoupper($match[2])
+                        |> preg_replace('/\s+/', ' ', ?));
                 } else {
                     $comparison = 'IN';
                 }
@@ -610,9 +611,10 @@ abstract class QueryGenerator
                 }
 
                 $field = $this->connection->quoteIdentifier($field);
-                $value = array_map($this->parseExpression(?, $binder), $value);
+                $valuesSql = array_map($this->parseExpression(?, $binder), $value)
+                    |> implode(', ', ?);
 
-                $groups[] = $field.' '.$comparison.' ('.implode(', ', $value).')';
+                $groups[] = $field.' '.$comparison.' ('.$valuesSql.')';
 
                 continue;
             }
@@ -648,8 +650,7 @@ abstract class QueryGenerator
 
             if (preg_match('/\A(.+?)\s+([\>\<]\=?|\!?\=|(?:NOT\s+)?(?:LIKE|IN)|IS(?:\s+NOT)?)\z/i', $field, $match)) {
                 $field = $match[1];
-                $comparison = strtoupper($match[2]);
-                $comparison = (string) preg_replace('/\s+/', ' ', $comparison);
+                $comparison = (string) (strtoupper($match[2]) |> preg_replace('/\s+/', ' ', ?));
             } else {
                 $comparison = '=';
             }
@@ -800,9 +801,10 @@ abstract class QueryGenerator
                 return 'WEEKDAY('.$expression.')';
         }
 
-        $arguments = array_map($this->parseExpression(?, $binder), $arguments);
+        $argumentsSql = array_map($this->parseExpression(?, $binder), $arguments)
+            |> implode(', ', ?);
 
-        return $name.'('.implode(', ', $arguments).')';
+        return $name.'('.$argumentsSql.')';
     }
 
     /**
@@ -879,12 +881,12 @@ abstract class QueryGenerator
 
         $values = array_map(
             function(array $values) use ($binder, $columns): string {
-                $values = array_map(
+                $valuesSql = array_map(
                     fn(string $column): string => $this->parseExpression($values[$column], $binder),
                     $columns
-                );
+                ) |> implode(', ', ?);
 
-                return '('.implode(', ', $values).')';
+                return '('.$valuesSql.')';
             },
             $values
         );
@@ -1246,12 +1248,9 @@ abstract class QueryGenerator
         array $hints = [],
         ValueBinder|null $binder = null
     ): string {
-        $columns = array_filter(
-            array_keys($data[0] ?? []),
-            static fn(int|string $column): bool => !in_array($column, $keys)
-        );
-
-        $columns = array_values($columns);
+        $columns = array_keys($data[0] ?? [])
+            |> array_filter(?, static fn(int|string $column): bool => !in_array($column, $keys))
+            |> array_values(...);
 
         $allConditions = [];
         $allValues = [];
@@ -1347,9 +1346,10 @@ abstract class QueryGenerator
 
         $partitionBy = $window->getPartitionBy();
         if ($partitionBy !== []) {
-            $partitionBy = array_map($this->parseExpression(?, $binder, false), $partitionBy);
+            $partitionSql = array_map($this->parseExpression(?, $binder, false), $partitionBy)
+                |> implode(', ', ?);
 
-            $clauses[] = 'PARTITION BY '.implode(', ', $partitionBy);
+            $clauses[] = 'PARTITION BY '.$partitionSql;
         }
 
         $orderBy = $window->getOrderBy();

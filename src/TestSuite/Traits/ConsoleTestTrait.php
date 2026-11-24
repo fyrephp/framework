@@ -244,9 +244,9 @@ trait ConsoleTestTrait
 
         rewind($this->input);
 
-        $argv = str_getcsv($command, ' ', '"', '\\');
-
-        $this->exitCode = array_merge([''], $argv) |> $this->runner->handle(...);
+        $this->exitCode = str_getcsv($command, ' ', '"', '\\')
+            |> array_merge([''], ?)
+            |> $this->runner->handle(...);
     }
 
     /**

@@ -107,10 +107,7 @@ class Request extends HttpRequest
         // determine qop
         $qop = 'auth';
         if (isset($c['qop'])) {
-            $options = array_map(
-                trim(...),
-                explode(',', $c['qop'])
-            );
+            $options = explode(',', $c['qop']) |> array_map(trim(...), ?);
 
             if (in_array('auth-int', $options, true)) {
                 $qop = 'auth-int';

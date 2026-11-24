@@ -80,8 +80,7 @@ trait DebugTrait
             return $data;
         };
 
-        $data = get_object_vars($this);
-        $data = $debug($data, $secretKeys);
+        $data = get_object_vars($this) |> $debug(?, $secretKeys);
 
         ksort($data);
 

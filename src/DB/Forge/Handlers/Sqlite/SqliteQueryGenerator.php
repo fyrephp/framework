@@ -132,11 +132,9 @@ class SqliteQueryGenerator extends QueryGenerator
         }
 
         $sql .= ' KEY (';
-        $columns = array_map(
-            $this->connection->quoteIdentifierPart(...),
-            $index->getColumns()
-        );
-        $sql .= implode(', ', $columns);
+        $sql .= $index->getColumns()
+            |> array_map($this->connection->quoteIdentifierPart(...), ?)
+            |> implode(', ', ?);
         $sql .= ')';
 
         return $sql;
@@ -167,11 +165,9 @@ class SqliteQueryGenerator extends QueryGenerator
         $sql .= ' ON ';
         $sql .= $index->getTable()->getName() |> $this->connection->quoteIdentifierPart(...);
         $sql .= ' (';
-        $columns = array_map(
-            $this->connection->quoteIdentifierPart(...),
-            $index->getColumns()
-        );
-        $sql .= implode(', ', $columns);
+        $sql .= $index->getColumns()
+            |> array_map($this->connection->quoteIdentifierPart(...), ?)
+            |> implode(', ', ?);
         $sql .= ')';
 
         return $sql;

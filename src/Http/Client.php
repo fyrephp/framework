@@ -176,9 +176,9 @@ class Client implements ClientInterface
     public function delete(string $url, array|string $data = [], array $options = []): Response
     {
         $options = array_replace_recursive($this->config, $options);
-        $request = $this->buildRequest('DELETE', $url, $data, $options);
 
-        return $this->sendPrepared($request, $options);
+        return $this->buildRequest('DELETE', $url, $data, $options)
+            |> $this->sendPrepared(?, $options);
     }
 
     /**
@@ -192,9 +192,9 @@ class Client implements ClientInterface
     public function get(string $url, array|string $data = [], array $options = []): Response
     {
         $options = array_replace_recursive($this->config, $options);
-        $request = $this->buildRequest('GET', $url, $data, $options);
 
-        return $this->sendPrepared($request, $options);
+        return $this->buildRequest('GET', $url, $data, $options)
+            |> $this->sendPrepared(?, $options);
     }
 
     /**
@@ -218,9 +218,9 @@ class Client implements ClientInterface
     public function head(string $url, array|string $data = [], array $options = []): Response
     {
         $options = array_replace_recursive($this->config, $options);
-        $request = $this->buildRequest('HEAD', $url, $data, $options);
 
-        return $this->sendPrepared($request, $options);
+        return $this->buildRequest('HEAD', $url, $data, $options)
+            |> $this->sendPrepared(?, $options);
     }
 
     /**
@@ -234,9 +234,9 @@ class Client implements ClientInterface
     public function options(string $url, array|string $data = [], array $options = []): Response
     {
         $options = array_replace_recursive($this->config, $options);
-        $request = $this->buildRequest('OPTIONS', $url, $data, $options);
 
-        return $this->sendPrepared($request, $options);
+        return $this->buildRequest('OPTIONS', $url, $data, $options)
+            |> $this->sendPrepared(?, $options);
     }
 
     /**
@@ -250,9 +250,9 @@ class Client implements ClientInterface
     public function patch(string $url, array|string $data = [], array $options = []): Response
     {
         $options = array_replace_recursive($this->config, $options);
-        $request = $this->buildRequest('PATCH', $url, $data, $options);
 
-        return $this->sendPrepared($request, $options);
+        return $this->buildRequest('PATCH', $url, $data, $options)
+            |> $this->sendPrepared(?, $options);
     }
 
     /**
@@ -266,9 +266,9 @@ class Client implements ClientInterface
     public function post(string $url, array|string $data = [], array $options = []): Response
     {
         $options = array_replace_recursive($this->config, $options);
-        $request = $this->buildRequest('POST', $url, $data, $options);
 
-        return $this->sendPrepared($request, $options);
+        return $this->buildRequest('POST', $url, $data, $options)
+            |> $this->sendPrepared(?, $options);
     }
 
     /**
@@ -282,9 +282,9 @@ class Client implements ClientInterface
     public function put(string $url, array|string $data = [], array $options = []): Response
     {
         $options = array_replace_recursive($this->config, $options);
-        $request = $this->buildRequest('PUT', $url, $data, $options);
 
-        return $this->sendPrepared($request, $options);
+        return $this->buildRequest('PUT', $url, $data, $options)
+            |> $this->sendPrepared(?, $options);
     }
 
     /**
@@ -342,9 +342,9 @@ class Client implements ClientInterface
     public function trace(string $url, array|string $data = [], array $options = []): Response
     {
         $options = array_replace_recursive($this->config, $options);
-        $request = $this->buildRequest('TRACE', $url, $data, $options);
 
-        return $this->sendPrepared($request, $options);
+        return $this->buildRequest('TRACE', $url, $data, $options)
+            |> $this->sendPrepared(?, $options);
     }
 
     /**

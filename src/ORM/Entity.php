@@ -454,16 +454,10 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
      */
     public function getErrors(): array
     {
-        $diff = array_diff_key($this->fields, $this->errors);
-
-        $fields = array_map(
-            static::readError(...),
-            $diff
-        );
-
-        $fields = array_filter($fields, static fn(array $errors): bool => $errors !== []);
-
-        return array_merge($this->errors, $fields);
+        return array_diff_key($this->fields, $this->errors)
+            |> array_map(static::readError(...), ?)
+            |> array_filter(?, static fn(array $errors): bool => $errors !== [])
+            |> array_merge($this->errors, ?);
     }
 
     /**

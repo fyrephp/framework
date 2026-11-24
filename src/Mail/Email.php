@@ -366,9 +366,8 @@ class Email
                 $lines[] = '';
             }
 
-            $content = static::prepareBody($this->body[static::TEXT] ?? '', $this->charset, $this->appCharset);
-
-            $lines = array_merge($lines, $content);
+            $lines = static::prepareBody($this->body[static::TEXT] ?? '', $this->charset, $this->appCharset)
+                |> array_merge($lines, ?);
             $lines[] = '';
             $lines[] = '';
         }
@@ -381,9 +380,8 @@ class Email
                 $lines[] = '';
             }
 
-            $content = static::prepareBody($this->body[static::HTML] ?? '', $this->charset, $this->appCharset);
-
-            $lines = array_merge($lines, $content);
+            $lines = static::prepareBody($this->body[static::HTML] ?? '', $this->charset, $this->appCharset)
+                |> array_merge($lines, ?);
             $lines[] = '';
             $lines[] = '';
         }
@@ -394,18 +392,14 @@ class Email
         }
 
         if ($hasInlineAttachments) {
-            $attachments = $this->attachFiles($relatedBoundary, true);
-
-            $lines = array_merge($lines, $attachments);
+            $lines = $this->attachFiles($relatedBoundary, true) |> array_merge($lines, ?);
             $lines[] = '';
             $lines[] = '--'.$relatedBoundary.'--';
             $lines[] = '';
         }
 
         if ($hasAttachments) {
-            $attachments = $this->attachFiles($boundary);
-
-            $lines = array_merge($lines, $attachments);
+            $lines = $this->attachFiles($boundary) |> array_merge($lines, ?);
         }
 
         if ($multiPart) {
@@ -424,9 +418,7 @@ class Email
      */
     public function getFullBodyString(): string
     {
-        $body = $this->getFullBody();
-
-        return implode("\r\n", $body);
+        return $this->getFullBody() |> implode("\r\n", ?);
     }
 
     /**
@@ -1068,8 +1060,7 @@ class Email
      */
     protected static function wrap(string $string, int $charLimit = 998): array
     {
-        $string = str_replace(["\r\n", "\r"], "\n", $string);
-        $lines = explode("\n", $string);
+        $lines = str_replace(["\r\n", "\r"], "\n", $string) |> explode("\n", ?);
 
         $formatted = [];
         foreach ($lines as $line) {
@@ -1114,8 +1105,7 @@ class Email
 
                 // wordwrap the line
                 $formatted[] = $currentLine;
-                $wrapped = wordwrap($part, $charLimit);
-                $wrappedLines = explode("\n", $wrapped);
+                $wrappedLines = wordwrap($part, $charLimit) |> explode("\n", ?);
                 $currentLine = array_pop($wrappedLines);
                 $formatted = array_merge($formatted, $wrappedLines);
             }

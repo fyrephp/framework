@@ -8,7 +8,6 @@ use Exception;
 use Fyre\Utility\Promise\AsyncPromise;
 use Fyre\Utility\Promise\Exceptions\CancelledPromiseException;
 use Fyre\Utility\Promise\Promise;
-use Fyre\Utility\Promise\PromiseInterface;
 use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
@@ -195,12 +194,7 @@ final class AsyncPromiseTest extends TestCase
 
         try {
             Promise::any([$promise1, $promise2])
-                ->then(function(int $value): void {
-                    $this->assertSame(
-                        1,
-                        $value
-                    );
-                });
+                ->then(self::assertSame(1, ?));
         } finally {
             socket_write($writer, '1');
             $promise2->wait();
@@ -221,12 +215,7 @@ final class AsyncPromiseTest extends TestCase
         });
 
         Promise::any([$promise1, $promise2])
-            ->then(function(int $value): void {
-                $this->assertSame(
-                    3,
-                    $value
-                );
-            })
+            ->then(self::assertSame(3, ?))
             ->catch(function(): void {
                 $this->fail();
             });
@@ -258,12 +247,7 @@ final class AsyncPromiseTest extends TestCase
 
         try {
             Promise::any([$promise1, $promise2])
-                ->then(function(int $value): void {
-                    $this->assertSame(
-                        1,
-                        $value
-                    );
-                })
+                ->then(self::assertSame(1, ?))
                 ->catch(function(): void {
                     $this->fail();
                 });
@@ -642,12 +626,7 @@ final class AsyncPromiseTest extends TestCase
 
         $promise->catch(static function(): int {
             return 1;
-        })->then(function(int $value) {
-            $this->assertSame(
-                1,
-                $value
-            );
-        });
+        })->then(self::assertSame(1, ?));
 
         $promise->wait();
     }
@@ -676,14 +655,7 @@ final class AsyncPromiseTest extends TestCase
             throw new Exception();
         });
 
-        $promise->catch(static function(): PromiseInterface {
-            return Promise::resolve(1);
-        })->then(function(int $value) {
-            $this->assertSame(
-                1,
-                $value
-            );
-        });
+        $promise->catch(Promise::resolve(1, ...))->then(self::assertSame(1, ?));
 
         $promise->wait();
     }
@@ -961,12 +933,7 @@ final class AsyncPromiseTest extends TestCase
 
         try {
             Promise::race([$promise1, $promise2])
-                ->then(function(int $value): void {
-                    $this->assertSame(
-                        1,
-                        $value
-                    );
-                });
+                ->then(self::assertSame(1, ?));
         } finally {
             socket_write($writer, '1');
             $promise2->wait();
@@ -1043,12 +1010,7 @@ final class AsyncPromiseTest extends TestCase
 
         try {
             Promise::race([$promise1, $promise2])
-                ->then(function(int $value): void {
-                    $this->assertSame(
-                        1,
-                        $value
-                    );
-                })
+                ->then(self::assertSame(1, ?))
                 ->catch(function(): void {
                     $this->fail();
                 });
@@ -1084,12 +1046,7 @@ final class AsyncPromiseTest extends TestCase
             $resolve(1);
         });
 
-        $promise->then(function(int $value): void {
-            $this->assertSame(
-                1,
-                $value
-            );
-        });
+        $promise->then(self::assertSame(1, ?));
 
         $promise->wait();
     }

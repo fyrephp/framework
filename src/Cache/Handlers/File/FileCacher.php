@@ -121,8 +121,7 @@ class FileCacher extends Cacher
     #[Override]
     public function delete(string $key): bool
     {
-        $key = $this->prepareKey($key);
-        $filePath = Path::join($this->path, $key);
+        $filePath = $this->prepareKey($key) |> Path::join($this->path, ?);
 
         if (!file_exists($filePath)) {
             return false;
@@ -139,8 +138,7 @@ class FileCacher extends Cacher
     #[Override]
     public function get(string $key, mixed $default = null): mixed
     {
-        $key = $this->prepareKey($key);
-        $filePath = Path::join($this->path, $key);
+        $filePath = $this->prepareKey($key) |> Path::join($this->path, ?);
 
         $handle = @fopen($filePath, 'rb');
 
@@ -179,8 +177,7 @@ class FileCacher extends Cacher
     #[Override]
     public function increment(string $key, int $amount = 1): false|int
     {
-        $key = $this->prepareKey($key);
-        $filePath = Path::join($this->path, $key);
+        $filePath = $this->prepareKey($key) |> Path::join($this->path, ?);
 
         $chmod = !file_exists($filePath);
 

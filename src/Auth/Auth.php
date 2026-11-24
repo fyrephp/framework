@@ -102,7 +102,7 @@ class Auth
     public function access(): Access
     {
         return $this->access ??= $this->container->build(Access::class, [
-            'userResolver' => fn(): Entity|null => $this->user(),
+            'userResolver' => $this->user(...),
         ]);
     }
 

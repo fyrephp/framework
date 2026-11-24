@@ -145,12 +145,9 @@ class MemcachedCacher extends Cacher
     #[Override]
     public function deleteMultiple(iterable $keys): bool
     {
-        $keys = array_map(
-            $this->prepareKey(...),
-            iterator_to_array($keys)
-        );
-
-        $result = $this->connection->deleteMulti($keys);
+        $result = iterator_to_array($keys)
+            |> array_map($this->prepareKey(...), ?)
+            |> $this->connection->deleteMulti(...);
 
         return !in_array(false, $result, true);
     }
@@ -213,12 +210,9 @@ class MemcachedCacher extends Cacher
             return true;
         }
 
-        $keys = array_map(
-            $this->prepareKey(...),
-            array_keys($values)
-        );
-
-        $values = array_combine($keys, $values);
+        $values = array_keys($values)
+            |> array_map($this->prepareKey(...), ?)
+            |> array_combine(?, $values);
         $expires = $expires === null ?
             0 :
             static::getExpiry($expires);

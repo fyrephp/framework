@@ -245,11 +245,9 @@ class PostgresQueryGenerator extends QueryGenerator
             ));
         }
 
-        $columns = array_map(
-            $this->connection->quoteIdentifierPart(...),
-            $index->getColumns()
-        );
-        $columns = implode(', ', $columns);
+        $columns = $index->getColumns()
+            |> array_map($this->connection->quoteIdentifierPart(...), ?)
+            |> implode(', ', ?);
 
         if ($index->isPrimary()) {
             return 'PRIMARY KEY ('.$columns.')';
@@ -299,11 +297,9 @@ class PostgresQueryGenerator extends QueryGenerator
         $sql .= ' USING ';
         $sql .= strtoupper((string) $index->getType());
         $sql .= ' (';
-        $columns = array_map(
-            $this->connection->quoteIdentifierPart(...),
-            $index->getColumns()
-        );
-        $sql .= implode(', ', $columns);
+        $sql .= $index->getColumns()
+            |> array_map($this->connection->quoteIdentifierPart(...), ?)
+            |> implode(', ', ?);
         $sql .= ')';
 
         return $sql;

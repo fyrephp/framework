@@ -71,9 +71,7 @@ class EntityContext extends Context
             return null;
         }
 
-        $schema = $model->getSchema();
-
-        return $this->getSchemaDefaultValue($schema, $field);
+        return $model->getSchema() |> $this->getSchemaDefaultValue(?, $field);
     }
 
     /**
@@ -184,9 +182,7 @@ class EntityContext extends Context
             return null;
         }
 
-        $schema = $model->getSchema();
-
-        return static::getSchemaOptionValues($schema, $field);
+        return $model->getSchema() |> static::getSchemaOptionValues(?, $field);
     }
 
     /**
@@ -201,9 +197,7 @@ class EntityContext extends Context
             return null;
         }
 
-        $schema = $model->getSchema();
-
-        return static::getSchemaStep($schema, $field);
+        return $model->getSchema() |> static::getSchemaStep(?, $field);
     }
 
     /**
@@ -269,9 +263,7 @@ class EntityContext extends Context
             return parent::isRequired($key);
         }
 
-        $validator = $model->getValidator();
-
-        return static::isValidationRequired($validator, $field);
+        return $model->getValidator() |> static::isValidationRequired(?, $field);
     }
 
     /**

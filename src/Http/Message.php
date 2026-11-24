@@ -140,12 +140,9 @@ class Message implements MessageInterface
             return [];
         }
 
-        $headerNames = array_map(
-            fn(string $name): string => $this->headerNames[$name],
-            array_keys($this->headers)
-        );
-
-        return array_combine($headerNames, $this->headers);
+        return array_keys($this->headers)
+            |> array_map(fn(string $name): string => $this->headerNames[$name], ?)
+            |> array_combine(?, $this->headers);
     }
 
     /**

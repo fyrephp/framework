@@ -52,21 +52,17 @@ class MysqlQueryGenerator extends QueryGenerator
 
         $query = ' ON DUPLICATE KEY UPDATE ';
 
-        $columns = array_filter(
-            array_keys($values[0] ?? []),
-            static fn(int|string $column): bool => !in_array($column, $excludeUpdateKeys, true)
-        );
-
-        $columns = array_map(
-            function(int|string $column): string {
+        $query .= array_keys($values[0] ?? [])
+            |> array_filter(
+                ?,
+                static fn(int|string $column): bool => !in_array($column, $excludeUpdateKeys, true)
+            )
+            |> array_map(function(int|string $column): string {
                 $column = $this->connection->quoteIdentifierPart((string) $column);
 
                 return $column.' = VALUES('.$column.')';
-            },
-            $columns
-        );
-
-        $query .= implode(', ', $columns);
+            }, ?)
+            |> implode(', ', ?);
 
         return $query;
     }

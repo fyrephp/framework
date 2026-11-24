@@ -188,9 +188,12 @@ class Inflector
      */
     public function camelize(string $string, string $delimiter = '_'): string
     {
-        return $this->cache(__FUNCTION__.$delimiter, $string, function(string $string) use ($delimiter): string {
-            return str_replace(' ', '', $this->humanize($string, $delimiter));
-        });
+        return $this->cache(
+            __FUNCTION__.$delimiter,
+            $string,
+            fn(string $string): string => $this->humanize($string, $delimiter)
+                |> str_replace(' ', '', ?)
+        );
     }
 
     /**

@@ -61,8 +61,6 @@ class ContentsContains extends Constraint
     #[Override]
     protected function matches(mixed $other): bool
     {
-        $other = implode(PHP_EOL, $other);
-
-        return str_contains($other, $this->needle);
+        return implode(PHP_EOL, $other) |> str_contains(?, $this->needle);
     }
 }

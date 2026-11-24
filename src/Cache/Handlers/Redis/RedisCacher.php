@@ -175,10 +175,7 @@ class RedisCacher extends Cacher
     #[Override]
     public function deleteMultiple(iterable $keys): bool
     {
-        $keys = array_map(
-            $this->prepareKey(...),
-            iterator_to_array($keys)
-        );
+        $keys = iterator_to_array($keys) |> array_map($this->prepareKey(...), ?);
 
         return $this->connection->del($keys) >= count($keys);
     }
@@ -220,9 +217,7 @@ class RedisCacher extends Cacher
     #[Override]
     public function has(string $key): bool
     {
-        $key = $this->prepareKey($key);
-
-        return $this->connection->hExists($key, 'value');
+        return $this->prepareKey($key) |> $this->connection->hExists(?, 'value');
     }
 
     /**

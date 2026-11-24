@@ -263,9 +263,7 @@ class CurlHandler extends ClientHandler
             } else if (str_contains($header, ':')) {
                 [$name, $value] = explode(':', $header, 2);
                 $name = trim($name);
-                $value = trim($value);
-
-                $response = $response->withAddedHeader($name, $value);
+                $response = trim($value) |> $response->withAddedHeader($name, ?);
             }
         }
 

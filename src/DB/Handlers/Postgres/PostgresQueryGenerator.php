@@ -36,7 +36,8 @@ class PostgresQueryGenerator extends QueryGenerator
             return parent::buildAggregate($aggregate, $binder);
         }
 
-        $arguments = array_map($this->parseExpression(?, $binder), $aggregate->getArguments());
+        $argumentsSql = array_map($this->parseExpression(?, $binder), $aggregate->getArguments())
+            |> implode(', ', ?);
 
         $query = $aggregate->getName().'(';
 
@@ -44,7 +45,7 @@ class PostgresQueryGenerator extends QueryGenerator
             $query .= 'DISTINCT ';
         }
 
-        $query .= implode(', ', $arguments).')';
+        $query .= $argumentsSql.')';
         $query .= ' FILTER (WHERE '.$this->buildConditionExpression($filter, $binder).')';
 
         return $query;
@@ -151,21 +152,17 @@ class PostgresQueryGenerator extends QueryGenerator
         $query .= ' ('.implode(', ', $conflictKeys).')';
         $query .= ' DO UPDATE SET ';
 
-        $columns = array_filter(
-            array_keys($values[0] ?? []),
-            static fn(int|string $column): bool => !in_array($column, $excludeUpdateKeys, true)
-        );
-
-        $columns = array_map(
-            function(int|string $column): string {
+        $query .= array_keys($values[0] ?? [])
+            |> array_filter(
+                ?,
+                static fn(int|string $column): bool => !in_array($column, $excludeUpdateKeys, true)
+            )
+            |> array_map(function(int|string $column): string {
                 $column = $this->connection->quoteIdentifierPart((string) $column);
 
                 return $column.' = EXCLUDED.'.$column;
-            },
-            $columns
-        );
-
-        $query .= implode(', ', $columns);
+            }, ?)
+            |> implode(', ', ?);
 
         return $query;
     }

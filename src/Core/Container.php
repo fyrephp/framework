@@ -656,10 +656,8 @@ class Container implements ContainerInterface
                         continue;
                     }
 
-                    $dependents = array_map(
-                        static fn(string $dependent): string => '`'.$dependent.'`',
-                        array_slice($this->buildStack, (int) $index)
-                    );
+                    $dependents = array_slice($this->buildStack, (int) $index)
+                        |> array_map(sprintf('`%s`', ?), ?);
 
                     throw new ContainerException(sprintf(
                         'Class `%s` is dependent on itself. (%s)',

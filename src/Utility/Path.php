@@ -112,12 +112,9 @@ abstract class Path
      */
     public static function join(string ...$paths): string
     {
-        $paths = array_filter(
-            $paths,
-            static fn(string $segment): bool => $segment !== ''
-        );
-
-        return implode(DIRECTORY_SEPARATOR, $paths) |> static::normalize(...);
+        return array_filter($paths, static fn(string $segment): bool => $segment !== '')
+            |> implode(DIRECTORY_SEPARATOR, ?)
+            |> static::normalize(...);
     }
 
     /**

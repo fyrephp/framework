@@ -427,9 +427,10 @@ class Model implements EventListenerInterface
             }
 
             if ($events) {
-                $connection->afterCommit(function() use ($entity, $options): void {
-                    $this->dispatchEvent('ORM.afterDeleteCommit', ['entity' => $entity, 'options' => $options]);
-                }, 100);
+                $connection->afterCommit(
+                    $this->dispatchEvent('ORM.afterDeleteCommit', ['entity' => $entity, 'options' => $options], ...),
+                    100
+                );
             }
 
             $connection->commit();
@@ -1315,9 +1316,10 @@ class Model implements EventListenerInterface
             }
 
             if ($events) {
-                $connection->afterCommit(function() use ($entity, $options): void {
-                    $this->dispatchEvent('ORM.afterSaveCommit', ['entity' => $entity, 'options' => $options]);
-                }, 100);
+                $connection->afterCommit(
+                    $this->dispatchEvent('ORM.afterSaveCommit', ['entity' => $entity, 'options' => $options], ...),
+                    100
+                );
             }
 
             $connection->commit();

@@ -255,10 +255,11 @@ class Cors
 
         $headers = $request->getHeaderLine('Access-Control-Request-Headers');
         $headers = $headers !== '' ?
-            array_map(
-                static fn(string $header): string => trim($header) |> strtolower(...),
-                explode(',', $headers)
-            ) :
+            explode(',', $headers)
+                |> array_map(
+                    static fn(string $header): string => trim($header) |> strtolower(...),
+                    ?
+                ) :
             [];
 
         return array_diff($headers, $allowedHeaders) === [];

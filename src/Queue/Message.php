@@ -11,6 +11,7 @@ use function array_values;
 use function class_exists;
 use function count;
 use function implode;
+use function intval;
 use function json_encode;
 use function ksort;
 use function md5;
@@ -63,10 +64,8 @@ class Message
     {
         $this->config = array_replace(static::$defaults, $options);
 
-        $this->config['backoff'] = array_map(
-            static fn(mixed $delay): int => (int) $delay,
-            (array) $this->config['backoff']
-        ) |> array_values(...);
+        $this->config['backoff'] = array_map(intval(...), (array) $this->config['backoff'])
+            |> array_values(...);
 
         if ($this->config['expires']) {
             $this->config['before'] ??= time() + $this->config['expires'];

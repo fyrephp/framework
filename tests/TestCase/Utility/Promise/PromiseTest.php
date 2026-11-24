@@ -100,12 +100,7 @@ final class PromiseTest extends TestCase
             throw new Exception();
         })->catch(static function(): int {
             return 1;
-        })->then(function(int $value) {
-            $this->assertSame(
-                1,
-                $value
-            );
-        });
+        })->then(self::assertSame(1, ?));
     }
 
     public function testCatchThenCatch(): void
@@ -126,14 +121,7 @@ final class PromiseTest extends TestCase
     {
         new Promise(static function(Closure $resolve, Closure $reject): never {
             throw new Exception();
-        })->catch(static function(): PromiseInterface {
-            return Promise::resolve(1);
-        })->then(function(int $value) {
-            $this->assertSame(
-                1,
-                $value
-            );
-        });
+        })->catch(Promise::resolve(1, ...))->then(self::assertSame(1, ?));
     }
 
     public function testDebug(): void
@@ -357,24 +345,14 @@ final class PromiseTest extends TestCase
     {
         new Promise(static function(Closure $resolve): void {
             $resolve(1);
-        })->then(function(int $value): void {
-            $this->assertSame(
-                1,
-                $value
-            );
-        });
+        })->then(self::assertSame(1, ?));
     }
 
     public function testThenThen(): void
     {
         Promise::resolve(1)
             ->then(static fn(int $value): int => $value + 1)
-            ->then(function(int $value): void {
-                $this->assertSame(
-                    2,
-                    $value
-                );
-            });
+            ->then(self::assertSame(2, ?));
     }
 
     public function testThenThenCatch(): void
@@ -397,13 +375,8 @@ final class PromiseTest extends TestCase
     public function testThenThenPromise(): void
     {
         Promise::resolve()
-            ->then(static fn(): PromiseInterface => Promise::resolve(1))
-            ->then(function(int $value): void {
-                $this->assertSame(
-                    1,
-                    $value
-                );
-            });
+            ->then(Promise::resolve(1, ...))
+            ->then(self::assertSame(1, ?));
     }
 
     public function testThenThenThen(): void
@@ -411,12 +384,7 @@ final class PromiseTest extends TestCase
         Promise::resolve()
             ->then(static fn(): int => 1)
             ->then(static fn(int $value): int => $value + 1)
-            ->then(function(int $value): void {
-                $this->assertSame(
-                    2,
-                    $value
-                );
-            });
+            ->then(self::assertSame(2, ?));
     }
 
     public function testUncaughtCaughtException(): void

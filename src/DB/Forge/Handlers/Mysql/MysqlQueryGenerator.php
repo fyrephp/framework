@@ -172,13 +172,11 @@ class MysqlQueryGenerator extends QueryGenerator
             case 'set':
                 $values = $column->getValues();
                 if ($values !== null) {
-                    $values = array_map(
+                    $sql .= '(';
+                    $sql .= array_map(
                         fn(mixed $value): string => $this->connection->quote((string) $value),
                         $values
-                    );
-
-                    $sql .= '(';
-                    $sql .= implode(',', $values);
+                    ) |> implode(',', ?);
                     $sql .= ')';
                 }
                 break;
@@ -405,11 +403,9 @@ class MysqlQueryGenerator extends QueryGenerator
      */
     public function buildIndex(Index $index): string
     {
-        $columns = array_map(
-            $this->connection->quoteIdentifierPart(...),
-            $index->getColumns()
-        );
-        $columns = implode(', ', $columns);
+        $columns = $index->getColumns()
+            |> array_map($this->connection->quoteIdentifierPart(...), ?)
+            |> implode(', ', ?);
 
         $type = (string) $index->getType();
 

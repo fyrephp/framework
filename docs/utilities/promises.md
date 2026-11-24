@@ -22,7 +22,7 @@ use Fyre\Utility\Promise\Promise;
 $promise = new Promise(static fn(): string => 'ready');
 
 $result = $promise
-    ->then(static fn(string $value): string => strtoupper($value))
+    ->then(strtoupper(...))
     ->then(static fn(string $value): string => $value.'!');
 
 echo Promise::await($result); // READY!

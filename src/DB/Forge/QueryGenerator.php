@@ -147,20 +147,16 @@ abstract class QueryGenerator
         $sql .= $foreignKey->getName() |> $this->connection->quoteIdentifierPart(...);
         $sql .= ' FOREIGN KEY ';
         $sql .= '(';
-        $columns = array_map(
-            $this->connection->quoteIdentifierPart(...),
-            $foreignKey->getColumns()
-        );
-        $sql .= implode(', ', $columns);
+        $sql .= $foreignKey->getColumns()
+            |> array_map($this->connection->quoteIdentifierPart(...), ?)
+            |> implode(', ', ?);
         $sql .= ')';
         $sql .= ' REFERENCES ';
         $sql .= $foreignKey->getReferencedTable() |> $this->connection->quoteIdentifierPart(...);
         $sql .= ' (';
-        $referencedColumns = array_map(
-            $this->connection->quoteIdentifierPart(...),
-            $foreignKey->getReferencedColumns()
-        );
-        $sql .= implode(', ', $referencedColumns);
+        $sql .= $foreignKey->getReferencedColumns()
+            |> array_map($this->connection->quoteIdentifierPart(...), ?)
+            |> implode(', ', ?);
         $sql .= ')';
 
         if ($onUpdate) {

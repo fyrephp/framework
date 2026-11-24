@@ -223,8 +223,7 @@ class Lang
         $locales = [];
 
         foreach ($testLocales as $locale) {
-            $locale = strtolower($locale);
-            $localeParts = explode('_', $locale);
+            $localeParts = strtolower($locale) |> explode('_', ?);
             while ($localeParts !== []) {
                 $newLocale = implode('_', $localeParts);
 

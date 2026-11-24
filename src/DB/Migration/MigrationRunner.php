@@ -199,8 +199,7 @@ class MigrationRunner
     public function getStatus(): array
     {
         $migrations = $this->getMigrations();
-        $ranMigrations = $this->getHistory()->all();
-        $ranMigrationsByName = array_column($ranMigrations, null, 'migration');
+        $ranMigrationsByName = $this->getHistory()->all() |> array_column(?, null, 'migration');
 
         $allMigrations = array_replace($migrations, $ranMigrationsByName);
 
@@ -423,8 +422,7 @@ class MigrationRunner
                         continue;
                     }
 
-                    $name = $reflection->getShortName();
-                    $name = substr($name, 10);
+                    $name = $reflection->getShortName() |> substr(?, 10);
 
                     $migrations[$name] = $className;
                 }

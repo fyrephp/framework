@@ -343,7 +343,7 @@ class CursorPage extends AbstractPage
             throw new InvalidArgumentException('Cursor is not valid.');
         }
 
-        if (!array_all($data['values'], static fn(mixed $value): bool => is_scalar($value))) {
+        if (!array_all($data['values'], is_scalar(?))) {
             throw new InvalidArgumentException('Cursor is not valid.');
         }
 

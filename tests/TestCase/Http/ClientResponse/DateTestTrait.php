@@ -17,7 +17,7 @@ trait DateTestTrait
     {
         return [
             'timestamp string' => [static fn(): string => '0'],
-            'framework date time' => [static fn(): DateTime => DateTime::createFromTimestamp(0)],
+            'framework date time' => [DateTime::createFromTimestamp(0, ...)],
             'native date time' => [static fn(): \DateTime => new \DateTime('@0')],
         ];
     }

@@ -28,7 +28,7 @@ After configuring a `default` handler, use `remember()` for the common read-or-c
 ```php
 $report = cache()->remember(
     'report.123',
-    static fn() => buildReport(123),
+    buildReport(123, ...),
     300
 );
 ```
@@ -169,7 +169,7 @@ $cache = $caches->use();
 $value = $cache->get('report.123');
 $cache->set('report.123', $value, 300);
 
-$value = $cache->remember('report.123', static fn() => buildReport(), 300);
+$value = $cache->remember('report.123', buildReport(...), 300);
 
 $cache->increment('counters.reports_generated');
 ```
@@ -207,7 +207,7 @@ Use `synchronized()` when a callback must run while holding a named lock. The lo
 ```php
 $report = $cache->synchronized(
     'reports.daily',
-    static fn() => buildDailyReport(),
+    buildDailyReport(...),
     expires: 30,
     wait: 2
 );

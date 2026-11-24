@@ -39,9 +39,9 @@ class AuthMiddleware implements MiddlewareInterface
         $request = $request->withAttribute('auth', $this->auth);
 
         $authenticators = $this->auth->authenticators();
-        $user = $this->auth->authenticate($request);
-
-        $response = $request->withAttribute('user', $user) |> $handler->handle(...);
+        $response = $this->auth->authenticate($request)
+            |> $request->withAttribute('user', ?)
+            |> $handler->handle(...);
 
         $user = $this->auth->user();
 

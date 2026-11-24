@@ -66,9 +66,7 @@ trait NamespacesTrait
      */
     public function hasNamespace(string $namespace): bool
     {
-        $namespace = Loader::normalizeNamespace($namespace);
-
-        return in_array($namespace, $this->namespaces, true);
+        return Loader::normalizeNamespace($namespace) |> in_array(?, $this->namespaces, true);
     }
 
     /**

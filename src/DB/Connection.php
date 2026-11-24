@@ -507,9 +507,7 @@ abstract class Connection
             throw new MissingConnectionException();
         }
 
-        $info = $this->pdo->errorInfo();
-
-        return implode(' ', $info);
+        return $this->pdo->errorInfo() |> implode(' ', ?);
     }
 
     /**
@@ -641,15 +639,14 @@ abstract class Connection
 
         // identifier
         if (preg_match('/\A[a-z_]\w*(?:\.[a-z_]\w*)*(?:\.\*)?\z/i', $identifier)) {
-            $parts = explode('.', $identifier);
-            $parts = array_map(
-                fn(string $part): string => $part === '*' ?
-                    $part :
-                    $this->quoteIdentifierPart($part),
-                $parts
-            );
-
-            return implode('.', $parts);
+            return explode('.', $identifier)
+                |> array_map(
+                    fn(string $part): string => $part === '*' ?
+                        $part :
+                        $this->quoteIdentifierPart($part),
+                    ?
+                )
+                |> implode('.', ?);
         }
 
         // function(...)

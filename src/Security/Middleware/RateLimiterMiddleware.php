@@ -98,8 +98,6 @@ class RateLimiterMiddleware implements MiddlewareInterface
             ]);
         }
 
-        $response = $handler->handle($request);
-
-        return $this->limiter->addHeaders($response, $data);
+        return $handler->handle($request) |> $this->limiter->addHeaders(?, $data);
     }
 }

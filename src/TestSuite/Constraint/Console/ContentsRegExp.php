@@ -61,8 +61,6 @@ class ContentsRegExp extends Constraint
     #[Override]
     protected function matches(mixed $other): bool
     {
-        $other = implode(PHP_EOL, $other);
-
-        return preg_match($this->pattern, $other) === 1;
+        return (implode(PHP_EOL, $other) |> preg_match($this->pattern, ?)) === 1;
     }
 }

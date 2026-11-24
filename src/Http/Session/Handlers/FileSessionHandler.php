@@ -61,8 +61,7 @@ class FileSessionHandler extends SessionHandler
             return false;
         }
 
-        $key = $this->prepareKey($sessionId);
-        $filePath = Path::join($this->path, $key);
+        $filePath = $this->prepareKey($sessionId) |> Path::join($this->path, ?);
 
         @unlink($filePath);
 
@@ -138,8 +137,7 @@ class FileSessionHandler extends SessionHandler
             return false;
         }
 
-        $key = $this->prepareKey($sessionId);
-        $filePath = Path::join($this->path, $key);
+        $filePath = $this->prepareKey($sessionId) |> Path::join($this->path, ?);
 
         // PHP may refresh an empty session before its first write().
         $isNew = $sessionId === $this->pendingSessionId;
@@ -177,8 +175,7 @@ class FileSessionHandler extends SessionHandler
             return false;
         }
 
-        $key = $this->prepareKey($sessionId);
-        $filePath = Path::join($this->path, $key);
+        $filePath = $this->prepareKey($sessionId) |> Path::join($this->path, ?);
 
         return touch($filePath);
     }
@@ -193,8 +190,7 @@ class FileSessionHandler extends SessionHandler
             return false;
         }
 
-        $key = $this->prepareKey($sessionId);
-        $filePath = Path::join($this->path, $key);
+        $filePath = $this->prepareKey($sessionId) |> Path::join($this->path, ?);
         $modified = @filemtime($filePath);
 
         return $modified !== false && $modified >= time() - $this->config['expires'];
@@ -212,8 +208,7 @@ class FileSessionHandler extends SessionHandler
             return false;
         }
 
-        $key = $this->prepareKey($sessionId);
-        $filePath = Path::join($this->path, $key);
+        $filePath = $this->prepareKey($sessionId) |> Path::join($this->path, ?);
 
         $handle = @fopen($filePath, 'c+b');
 

@@ -31,9 +31,8 @@ class ArrayLogger extends Logger
     #[Override]
     public function log(mixed $level, string|Stringable $message, array $context = []): void
     {
-        $message = $this->interpolate($message, $context);
-
-        $this->content[] = $this->format((string) $level, $message, false);
+        $this->content[] = $this->interpolate($message, $context)
+            |> $this->format((string) $level, ?, false);
     }
 
     /**
