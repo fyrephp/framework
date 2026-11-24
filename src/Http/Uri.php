@@ -5,17 +5,16 @@ namespace Fyre\Http;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\Utility\Arr;
 use Override;
 use Psr\Http\Message\UriInterface;
 use Stringable;
 use Uri\Rfc3986\Uri as Rfc3986Uri;
 
-use function array_filter;
 use function count;
 use function explode;
 use function getservbyname;
 use function http_build_query;
-use function in_array;
 use function parse_str;
 use function preg_quote;
 use function preg_replace_callback;
@@ -23,8 +22,6 @@ use function rawurlencode;
 use function str_starts_with;
 use function substr;
 use function trim;
-
-use const ARRAY_FILTER_USE_KEY;
 
 /**
  * Provides a PSR-7 {@see UriInterface} implementation that wraps an RFC 3986 URI object and
@@ -341,11 +338,9 @@ class Uri implements Stringable, UriInterface
      */
     public function withOnlyQuery(array $keys): static
     {
-        return array_filter(
-            $this->getQueryParams(),
-            static fn(mixed $key): bool => in_array($key, $keys, true),
-            ARRAY_FILTER_USE_KEY
-        ) |> $this->withQueryParams(...);
+        return $this->getQueryParams()
+            |> Arr::only(?, $keys)
+            |> $this->withQueryParams(...);
     }
 
     /**
@@ -356,11 +351,9 @@ class Uri implements Stringable, UriInterface
      */
     public function withoutQuery(array $keys): static
     {
-        return array_filter(
-            $this->getQueryParams(),
-            static fn(mixed $key): bool => !in_array($key, $keys, true),
-            ARRAY_FILTER_USE_KEY
-        ) |> $this->withQueryParams(...);
+        return $this->getQueryParams()
+            |> Arr::except(?, $keys)
+            |> $this->withQueryParams(...);
     }
 
     /**

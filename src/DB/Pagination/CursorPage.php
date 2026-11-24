@@ -318,8 +318,7 @@ class CursorPage extends AbstractPage
      */
     protected function decodeCursor(string $cursor): array
     {
-        $encoded = strtr($cursor, '-_', '+/');
-        $decoded = base64_decode($encoded, true);
+        $decoded = strtr($cursor, '-_', '+/') |> base64_decode(?, true);
 
         if ($decoded === false) {
             throw new InvalidArgumentException('Cursor is not valid.');
@@ -365,10 +364,10 @@ class CursorPage extends AbstractPage
             'values' => $values,
             'previous' => $previous,
         ], JSON_THROW_ON_ERROR);
-        $encoded = base64_encode($data);
-        $encoded = strtr($encoded, '+/', '-_');
 
-        return rtrim($encoded, '=');
+        return base64_encode($data)
+            |> strtr(?, '+/', '-_')
+            |> rtrim(?, '=');
     }
 
     /**

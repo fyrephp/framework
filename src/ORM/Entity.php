@@ -576,10 +576,9 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
      */
     public function getVisible(): array
     {
-        $fields = array_keys($this->fields);
-        $fields = array_merge($fields, $this->virtual);
-
-        return array_diff($fields, $this->hidden);
+        return array_keys($this->fields)
+            |> array_merge(?, $this->virtual)
+            |> array_diff(?, $this->hidden);
     }
 
     /**

@@ -1030,12 +1030,12 @@ class Email
      */
     protected static function prepareBody(string $content, string $toCharset, string|null $fromCharset): array
     {
-        $content = str_replace(["\r\n", "\r"], "\n", $content);
-        $content = static::encodeString($content, $toCharset, $fromCharset) |> static::wrap(...);
-        $content = implode("\n", $content);
-        $content = rtrim($content, "\n");
-
-        return explode("\n", $content);
+        return str_replace(["\r\n", "\r"], "\n", $content)
+            |> static::encodeString(?, $toCharset, $fromCharset)
+            |> static::wrap(...)
+            |> implode("\n", ?)
+            |> rtrim(?, "\n")
+            |> explode("\n", ?);
     }
 
     /**
