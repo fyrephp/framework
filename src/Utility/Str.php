@@ -98,7 +98,7 @@ abstract class Str
 
     public const PAD_RIGHT = STR_PAD_RIGHT;
 
-    public const WHITESPACE_MASK = " \t\n\r\0\x0B";
+    public const WHITESPACE_MASK = " \t\n\r\0\x0B\f";
 
     /**
      * Returns the contents of a string after the first occurrence of a substring.

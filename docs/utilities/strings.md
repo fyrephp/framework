@@ -43,7 +43,7 @@ The values are `UserProfile`, `userProfile`, `user-profile`, `users`, and `show`
 | character sets | `ALPHA`, `NUMERIC`, `ALPHANUMERIC` | input for `random()` |
 | HTML flags | `ENT_COMPAT`, `ENT_DISALLOWED`, `ENT_HTML401`, `ENT_HTML5`, `ENT_IGNORE`, `ENT_NOQUOTES`, `ENT_QUOTES`, `ENT_SUBSTITUTE`, `ENT_XHTML`, `ENT_XML1` | flags for `escape()`; values mirror PHP's `ENT_*` constants |
 | padding | `PAD_LEFT`, `PAD_RIGHT`, `PAD_BOTH` | mode for `pad()` |
-| trimming | `WHITESPACE_MASK` | default mask for `trim()`, `trimStart()`, and `trimEnd()` |
+| trimming | `WHITESPACE_MASK` | default PHP whitespace mask, including form feed (`\f`), for `trim()`, `trimStart()`, and `trimEnd()` |
 
 ## Method guide
 

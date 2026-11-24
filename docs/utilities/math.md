@@ -161,7 +161,7 @@ The decimal result helpers return `float` when a value does not fit in the platf
 ## Behavior notes
 
 - Most methods are direct wrappers and retain PHP's validation, domain, overflow, `NAN`, and infinity behavior.
-- `clamp()` does not reorder its bounds; callers should pass the minimum before the maximum.
+- `clamp()` throws `ValueError` if the minimum exceeds the maximum or either bound is `NAN`. Both clamping helpers preserve the type of an in-range value, including at either bound.
 - Trigonometric inputs and inverse trigonometric results use radians unless the method name explicitly converts units.
 - `random()` and `randomInt()` use `random_int()` rather than a deterministic pseudo-random generator.
 - `Math` supports static macros.

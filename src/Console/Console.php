@@ -11,6 +11,7 @@ use NumberFormatter;
 use function array_is_list;
 use function array_keys;
 use function array_unshift;
+use function clamp;
 use function count;
 use function exec;
 use function fgets;
@@ -20,7 +21,6 @@ use function implode;
 use function is_resource;
 use function max;
 use function mb_strwidth;
-use function min;
 use function preg_replace;
 use function round;
 use function rtrim;
@@ -154,11 +154,7 @@ class Console
     {
         $terminalWidth = static::getWidth();
 
-        $maxWidth = $maxWidth === null ?
-            $terminalWidth :
-            min($maxWidth, $terminalWidth);
-
-        $maxWidth = max(1, $maxWidth);
+        $maxWidth = clamp($maxWidth ?? $terminalWidth, 1, $terminalWidth);
 
         return wordwrap($text, $maxWidth, PHP_EOL);
     }
@@ -356,8 +352,7 @@ class Console
 
         $this->lastStep = $step;
 
-        $percent = $step / $totalSteps;
-        $percent = min(max($percent, 0), 1);
+        $percent = clamp($step / $totalSteps, 0, 1);
 
         $barStep = (int) round($percent * static::TOTAL_STEPS);
 

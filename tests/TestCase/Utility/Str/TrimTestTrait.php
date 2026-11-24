@@ -15,6 +15,7 @@ trait TrimTestTrait
     {
         return [
             'whitespace' => ["\r\n This is a test string \r\n", 'This is a test string'],
+            'form feed' => ["\ftest\f", 'test'],
             'string' => ['This is a test string', 'This is a test string'],
         ];
     }

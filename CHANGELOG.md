@@ -21,6 +21,9 @@ This file records user-visible changes to FyreFramework. Internal refactors, tes
 ### Changed
 
 - Require PHP 8.6 or later.
+- Include form feed (`\f`) in the default mask for `Str::trim()`, `Str::trimStart()`, and `Str::trimEnd()`.
+- Use PHP's native clamping rules for `Math::clamp()` and `Math::clampPercent()`. In-range values keep their type, including at the bounds. `Math::clamp()` throws `ValueError` for reversed bounds or a `NAN` bound.
+- Replace the `$descending` boolean on `Collection::sort()` and `Collection::sortBy()` with `$direction`. Use `SortDirection::Descending` for descending order or omit the argument for ascending order.
 - Make command metadata readonly. Custom commands that redeclare `$alias`, `$description`, or `$options` must include `readonly` on those properties.
 - Database and ORM queries now require `retrySafe: true` to retry execution after a disconnect. Outside a transaction, recognized disconnects during statement preparation still trigger one automatic retry.
 - Memcached `clear()` now throws `CacheException` unless the prefix is empty and `flushServer` is `true`. Enabling this option permits a server-wide flush, including other applications’ entries and locks.

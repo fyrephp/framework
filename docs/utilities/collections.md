@@ -175,8 +175,8 @@ These methods return new collections. Except where the materialization table say
 
 | Method | Behavior |
 | --- | --- |
-| `sort(Closure\|int $callback = Collection::SORT_NATURAL, bool $descending = false): static` | sort values with a comparison closure or sort flag while preserving keys |
-| `sortBy(array\|Closure\|string\|null $valuePath = null, int $sort = Collection::SORT_NATURAL, bool $descending = false): static` | sort by extracted values while preserving keys |
+| `sort(Closure\|int $callback = Collection::SORT_NATURAL, SortDirection $direction = SortDirection::Ascending): static` | sort values with a comparison closure or sort flag while preserving keys |
+| `sortBy(array\|Closure\|string\|null $valuePath = null, int $sort = Collection::SORT_NATURAL, SortDirection $direction = SortDirection::Ascending): static` | sort by extracted values while preserving keys |
 | `reverse(): static` | reverse iteration order while preserving keys |
 | `shuffle(): static` | randomize order and reindex values |
 | `unique(array\|Closure\|string\|null $valuePath = null, bool $strict = false): static` | retain the first item for each extracted value and preserve its key |
@@ -184,7 +184,7 @@ These methods return new collections. Except where the materialization table say
 | `values(): static` | yield source values as a reindexed sequence |
 | `flip(): static` | use each value as a key and its original key as the value |
 
-Available sort flags are `SORT_NATURAL`, `SORT_NUMERIC`, `SORT_REGULAR`, and `SORT_STRING`. For `sort()`, `$descending` applies only when using a sort flag. A comparison closure controls its own direction. To sort strings using Swedish collation rules, use `$names->sort((new Collator('sv_SE'))->compare(...))`. `unique()` compares loosely by default. Pass `true` for strict comparison.
+Available sort flags are `SORT_NATURAL`, `SORT_NUMERIC`, `SORT_REGULAR`, and `SORT_STRING`. For `sort()`, `$direction` applies only when using a sort flag. A comparison closure controls its own direction. To sort by a field in descending order, use `$items->sortBy('name', direction: SortDirection::Descending)`. To sort strings using Swedish collation rules, use `$names->sort((new Collator('sv_SE'))->compare(...))`. `unique()` compares loosely by default. Pass `true` for strict comparison.
 
 ### Aggregates
 

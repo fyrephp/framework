@@ -15,6 +15,7 @@ use Iterator;
 use IteratorAggregate;
 use JsonSerializable;
 use Override;
+use SortDirection;
 use Stringable;
 use Traversable;
 
@@ -1140,15 +1141,17 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
      * Sorts the collection using a callback.
      *
      * @param Closure|int $callback The callback or sort method.
-     * @param bool $descending Whether to sort in descending order.
+     * @param SortDirection $direction The sort direction.
      * @return static The new Collection instance with sorted items.
      */
-    public function sort(Closure|int $callback = self::SORT_NATURAL, bool $descending = false): static
-    {
+    public function sort(
+        Closure|int $callback = self::SORT_NATURAL,
+        SortDirection $direction = SortDirection::Ascending
+    ): static {
         if (is_int($callback)) {
             return $this->sortBy(
                 sort: $callback,
-                descending: $descending
+                direction: $direction
             );
         }
 
@@ -1164,11 +1167,14 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
      *
      * @param array-key[]|Closure(TValue, TKey): mixed|string|null $valuePath The key path of the value.
      * @param int $sort The sort method.
-     * @param bool $descending Whether to sort in descending order.
+     * @param SortDirection $direction The sort direction.
      * @return static The new Collection instance with sorted items.
      */
-    public function sortBy(array|Closure|string|null $valuePath = null, int $sort = self::SORT_NATURAL, bool $descending = false): static
-    {
+    public function sortBy(
+        array|Closure|string|null $valuePath = null,
+        int $sort = self::SORT_NATURAL,
+        SortDirection $direction = SortDirection::Ascending
+    ): static {
         $valueCallback = static::valueExtractor($valuePath);
 
         $results = [];
@@ -1178,7 +1184,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
             $results[$key] = $valueCallback($item, $key);
         }
 
-        if ($descending) {
+        if ($direction === SortDirection::Descending) {
             arsort($results, $sort);
         } else {
             asort($results, $sort);

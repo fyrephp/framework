@@ -19,6 +19,7 @@ use function atanh;
 use function base_convert;
 use function bindec;
 use function ceil;
+use function clamp;
 use function cos;
 use function cosh;
 use function decbin;
@@ -214,7 +215,7 @@ abstract class Math
      */
     public static function clamp(float|int $number, float|int $min = 0, float|int $max = 1): float|int
     {
-        return max($min, min($max, $number));
+        return clamp($number, $min, $max);
     }
 
     /**
@@ -225,7 +226,7 @@ abstract class Math
      */
     public static function clampPercent(float|int $number): float|int
     {
-        return max(0, min(100, $number));
+        return clamp($number, 0, 100);
     }
 
     /**

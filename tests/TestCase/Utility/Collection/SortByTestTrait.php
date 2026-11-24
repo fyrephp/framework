@@ -6,6 +6,7 @@ namespace Tests\TestCase\Utility\Collection;
 use Closure;
 use Fyre\Utility\Collection;
 use PHPUnit\Framework\Attributes\DataProvider;
+use SortDirection;
 
 use function array_map;
 
@@ -123,7 +124,7 @@ trait SortByTestTrait
                 ],
             ],
             $collection
-                ->sortBy('value', Collection::SORT_NUMERIC, true)
+                ->sortBy('value', Collection::SORT_NUMERIC, direction: SortDirection::Descending)
                 ->values()
                 ->toArray()
         );

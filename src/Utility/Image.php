@@ -14,6 +14,7 @@ use RuntimeException;
 use function assert;
 use function base64_encode;
 use function ceil;
+use function clamp;
 use function exif_read_data;
 use function file_exists;
 use function file_get_contents;
@@ -822,6 +823,6 @@ class Image
      */
     protected static function normalizeChannel(float $value, int $max = 255): int
     {
-        return max(0, min($max, (int) round($value)));
+        return clamp((int) round($value), 0, $max);
     }
 }

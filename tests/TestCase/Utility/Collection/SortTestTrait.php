@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Collection;
 
 use Fyre\Utility\Collection;
+use SortDirection;
 
 trait SortTestTrait
 {
@@ -33,7 +34,7 @@ trait SortTestTrait
 
         $this->assertArraysAreIdentical(
             [2, 1.75, 1.5, 1.25, 1],
-            $collection->sort(Collection::SORT_NUMERIC, true)->values()->toArray()
+            $collection->sort(Collection::SORT_NUMERIC, SortDirection::Descending)->values()->toArray()
         );
     }
 

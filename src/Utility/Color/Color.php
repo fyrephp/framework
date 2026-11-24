@@ -32,6 +32,7 @@ use UnexpectedValueException;
 use function array_map;
 use function array_reduce;
 use function array_values;
+use function clamp;
 use function count;
 use function explode;
 use function fmod;
@@ -41,7 +42,6 @@ use function implode;
 use function in_array;
 use function is_finite;
 use function max;
-use function min;
 use function preg_match;
 use function preg_replace;
 use function rad2deg;
@@ -1099,7 +1099,7 @@ abstract class Color implements Stringable
     {
         static::ensureFinite($value);
 
-        return max($min, min($max, $value));
+        return clamp($value, $min, $max);
     }
 
     /**
