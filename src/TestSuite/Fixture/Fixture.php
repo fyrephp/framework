@@ -106,7 +106,9 @@ abstract class Fixture
         return array_map(
             static fn(Model $model): string => $model->getTable(),
             $this->getModels()
-        ) |> array_unique(...) |> array_values(...);
+        )
+            |> array_unique(...)
+            |> array_values(...);
     }
 
     /**

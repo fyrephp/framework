@@ -43,9 +43,10 @@ class Time extends AbstractDateTime
     public static function createFromArray(array $timeArray, string|null $timeZone = null, string|null $locale = null): static
     {
         $time = new static(null, $timeZone, $locale);
-        $timeArray = array_pad($timeArray, 4, 0);
 
-        return array_combine(['hour', 'minute', 'second', 'millisecond'], $timeArray) |> $time->withCalendarFields(...);
+        return array_pad($timeArray, 4, 0)
+            |> array_combine(['hour', 'minute', 'second', 'millisecond'], ?)
+            |> $time->withCalendarFields(...);
     }
 
     /**

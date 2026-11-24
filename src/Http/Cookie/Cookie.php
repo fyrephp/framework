@@ -190,8 +190,9 @@ class Cookie implements Stringable
      */
     public static function normalizeDomain(string $domain): array
     {
-        $domain = trim($domain) |> strtolower(...);
-        $domain = ltrim($domain, '.');
+        $domain = trim($domain)
+            |> strtolower(...)
+            |> ltrim(?, '.');
 
         if ($domain === '') {
             return ['', true];

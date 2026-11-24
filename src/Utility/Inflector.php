@@ -380,7 +380,9 @@ class Inflector
         return $this->cache(
             __FUNCTION__,
             $string,
-            fn(string $string): string => $this->underscore($string) |> $this->camelize(...) |> lcfirst(...)
+            fn(string $string): string => $this->underscore($string)
+                |> $this->camelize(...)
+                |> lcfirst(...)
         );
     }
 

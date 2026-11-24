@@ -121,7 +121,9 @@ class TestQueue extends Queue
         return array_map(
             static fn(Message $message): string => $message->getQueue(),
             static::$messages
-        ) |> array_unique(...) |> array_values(...);
+        )
+            |> array_unique(...)
+            |> array_values(...);
     }
 
     /**

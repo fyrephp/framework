@@ -13,6 +13,7 @@ use function array_values;
 use function in_array;
 use function is_array;
 use function sprintf;
+use function strval;
 
 /**
  * Provides form builder utilities.
@@ -266,8 +267,7 @@ class FormBuilder
         if (!is_array($selected)) {
             $selected = [$selected];
         }
-        $selected = array_values($selected);
-        $selected = array_map(static fn(mixed $value): string => (string) $value, $selected);
+        $selected = array_values($selected) |> array_map(strval(...), ?);
 
         $html = '<select'.$this->html->attributes($attributes).'>';
         $html .= $this->buildOptions($options, $selected);
