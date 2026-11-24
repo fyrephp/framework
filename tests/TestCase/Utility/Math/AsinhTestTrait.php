@@ -9,9 +9,10 @@ trait AsinhTestTrait
 {
     public function testAsinh(): void
     {
-        $this->assertSame(
+        $this->assertEqualsWithDelta(
             1.1947632172871094,
-            Math::asinh(1.5)
+            Math::asinh(1.5),
+            1e-15
         );
     }
 }

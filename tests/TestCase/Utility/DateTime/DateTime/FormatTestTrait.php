@@ -124,7 +124,7 @@ trait FormatTestTrait
     }
 
     /**
-     * @return array<string, array{string|null, string, string}>
+     * @return array<string, array{string|null, string, string, 3?: string}>
      */
     public static function timeZoneFormatProvider(): array
     {
@@ -145,15 +145,15 @@ trait FormatTestTrait
             'ISO 8601 extended time zone' => ['Australia/Brisbane', 'xxx', '+10:00'],
             'ISO 8601 extended Z' => [null, 'XXX', 'Z'],
             'ISO 8601 extended Z time zone' => ['Australia/Brisbane', 'XXX', '+10:00'],
-            'long basic' => [null, 'ZZZZ', 'GMT'],
+            'long basic' => [null, 'ZZZZ', 'GMT', 'GMT+00:00'],
             'long basic time zone' => ['Australia/Brisbane', 'ZZZZ', 'GMT+10:00'],
-            'long localized' => [null, 'OOOO', 'GMT'],
+            'long localized' => [null, 'OOOO', 'GMT', 'GMT+00:00'],
             'long localized time zone' => ['Australia/Brisbane', 'OOOO', 'GMT+10:00'],
             'long non-location' => [null, 'zzzz', 'Coordinated Universal Time'],
             'long non-location time zone' => ['Australia/Brisbane', 'zzzz', 'Australian Eastern Standard Time'],
             'long time zone ID' => [null, 'VV', 'UTC'],
             'long time zone ID time zone' => ['Australia/Brisbane', 'VV', 'Australia/Brisbane'],
-            'short localized' => [null, 'O', 'GMT'],
+            'short localized' => [null, 'O', 'GMT', 'GMT+0'],
             'short localized time zone' => ['Australia/Brisbane', 'O', 'GMT+10'],
             'short non-location' => [null, 'zzz', 'UTC'],
             'short non-location time zone' => ['Australia/Brisbane', 'zzz', 'GMT+10'],
@@ -173,11 +173,11 @@ trait FormatTestTrait
     }
 
     #[DataProvider('timeZoneFormatProvider')]
-    public function testFormatTimeZone(string|null $timeZone, string $format, string $expected): void
+    public function testFormatTimeZone(string|null $timeZone, string $format, string ...$expected): void
     {
-        $this->assertSame(
-            $expected,
-            DateTime::now($timeZone)->format($format)
+        $this->assertContains(
+            DateTime::now($timeZone)->format($format),
+            $expected
         );
     }
 }

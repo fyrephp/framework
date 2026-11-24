@@ -103,7 +103,7 @@ final class FormatterTest extends TestCase
 
         $this->assertSame(
             '٢٠٢٢-٠١-٠١',
-            $this->formatter->date($date, 'yyyy-MM-dd', locale: 'ar-AR')
+            $this->formatter->date($date, 'yyyy-MM-dd', locale: 'ar-EG-u-nu-arab')
         );
     }
 
@@ -123,7 +123,7 @@ final class FormatterTest extends TestCase
 
         $this->assertSame(
             '٢٠٢٢-٠١-٠١',
-            $this->formatter->date($date, 'yyyy-MM-dd', locale: 'ar-AR')
+            $this->formatter->date($date, 'yyyy-MM-dd', locale: 'ar-EG-u-nu-arab')
         );
     }
 
@@ -149,7 +149,7 @@ final class FormatterTest extends TestCase
 
         $this->assertSame(
             '٢٠٢٢-٠١-٠١ ٠٦:٥٩:٥٩',
-            $this->formatter->datetime($date, 'yyyy-MM-dd HH:mm:ss', 'America/New_York', 'ar-AR')
+            $this->formatter->datetime($date, 'yyyy-MM-dd HH:mm:ss', 'America/New_York', 'ar-EG-u-nu-arab')
         );
     }
 
@@ -229,7 +229,7 @@ final class FormatterTest extends TestCase
 
         $this->assertSame(
             '٠٦:٥٩:٥٩',
-            $this->formatter->time($date, 'HH:mm:ss', 'America/New_York', 'ar-AR')
+            $this->formatter->time($date, 'HH:mm:ss', 'America/New_York', 'ar-EG-u-nu-arab')
         );
     }
 
@@ -255,7 +255,7 @@ final class FormatterTest extends TestCase
 
         $this->assertSame(
             '١١:٥٩:٥٩',
-            $this->formatter->time($time, 'HH:mm:ss', locale: 'ar-AR')
+            $this->formatter->time($time, 'HH:mm:ss', locale: 'ar-EG-u-nu-arab')
         );
     }
 

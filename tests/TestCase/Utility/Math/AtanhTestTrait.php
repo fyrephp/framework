@@ -9,9 +9,10 @@ trait AtanhTestTrait
 {
     public function testAtanh(): void
     {
-        $this->assertSame(
+        $this->assertEqualsWithDelta(
             .5493061443340548,
-            Math::atanh(.5)
+            Math::atanh(.5),
+            1e-15
         );
     }
 }

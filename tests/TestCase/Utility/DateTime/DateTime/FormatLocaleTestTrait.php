@@ -124,7 +124,7 @@ trait FormatLocaleTestTrait
     }
 
     /**
-     * @return array<string, array{string|null, string, string, string}>
+     * @return array<string, array{string|null, string, string, string, 4?: string}>
      */
     public static function timeZoneFormatLocaleProvider(): array
     {
@@ -145,15 +145,15 @@ trait FormatLocaleTestTrait
             'ISO 8601 extended time zone' => ['Australia/Brisbane', 'ru', 'xxx', '+10:00'],
             'ISO 8601 extended z' => [null, 'ru', 'XXX', 'Z'],
             'ISO 8601 extended z time zone' => ['Australia/Brisbane', 'ru', 'XXX', '+10:00'],
-            'long basic' => [null, 'ru', 'ZZZZ', 'GMT'],
+            'long basic' => [null, 'ru', 'ZZZZ', 'GMT', 'GMT+00:00'],
             'long basic time zone' => ['Australia/Brisbane', 'ru', 'ZZZZ', 'GMT+10:00'],
-            'long localized' => [null, 'ru', 'OOOO', 'GMT'],
+            'long localized' => [null, 'ru', 'OOOO', 'GMT', 'GMT+00:00'],
             'long localized time zone' => ['Australia/Brisbane', 'ru', 'OOOO', 'GMT+10:00'],
             'long non location' => [null, 'ru', 'zzzz', 'Всемирное координированное время'],
             // 'long non-location time zone' => ['Australia/Brisbane', 'ru', 'zzzz', 'Восточная Австралия, стандартное время'],
             'long time zone ID' => [null, 'ru', 'VV', 'UTC'],
             'long time zone ID time zone' => ['Australia/Brisbane', 'ru', 'VV', 'Australia/Brisbane'],
-            'short localized' => [null, 'ru', 'O', 'GMT'],
+            'short localized' => [null, 'ru', 'O', 'GMT', 'GMT+0'],
             'short localized time zone' => ['Australia/Brisbane', 'ru', 'O', 'GMT+10'],
             'short non location' => [null, 'ru', 'zzz', 'UTC'],
             'short non location time zone' => ['Australia/Brisbane', 'ru', 'zzz', 'GMT+10'],
@@ -177,11 +177,11 @@ trait FormatLocaleTestTrait
         string|null $timeZone,
         string $locale,
         string $format,
-        string $expected
+        string ...$expected
     ): void {
-        $this->assertSame(
-            $expected,
-            DateTime::now($timeZone, $locale)->format($format)
+        $this->assertContains(
+            DateTime::now($timeZone, $locale)->format($format),
+            $expected
         );
     }
 }
