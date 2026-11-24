@@ -1347,10 +1347,7 @@ abstract class QueryGenerator
 
         $partitionBy = $window->getPartitionBy();
         if ($partitionBy !== []) {
-            $partitionBy = array_map(
-                fn(ValueExpressionInterface $field): string => $this->parseExpression($field, $binder, false),
-                $partitionBy
-            );
+            $partitionBy = array_map($this->parseExpression(?, $binder, false), $partitionBy);
 
             $clauses[] = 'PARTITION BY '.implode(', ', $partitionBy);
         }

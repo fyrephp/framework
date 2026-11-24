@@ -173,10 +173,7 @@ class MysqlTable extends Table
             } else if (preg_match('/\A(?:datetime|time|timestamp)\(([0-9]+)\)/', $result['col_type'], $match)) {
                 $fractionalSeconds = (int) $match[1];
             } else if (preg_match('/\A(?:enum|set)\((.*)\)\z/', $result['col_type'], $match)) {
-                $values = array_map(
-                    static fn(string $value): string => substr($value, 1, -1),
-                    explode(',', $match[1])
-                );
+                $values = explode(',', $match[1]) |> array_map(substr(?, 1, -1), ?);
             } else if (in_array($type, ['bigint', 'bit', 'int', 'mediumint', 'smallint', 'tinyint'], true)) {
                 $precision = match ($type) {
                     'bit' => 1,

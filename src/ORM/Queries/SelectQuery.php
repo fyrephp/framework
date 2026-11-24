@@ -1043,10 +1043,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 if ($matching === true) {
                     $this->matching[$alias] = $relationship;
                 } else if ($matching === false) {
-                    $primaryKeys = array_map(
-                        static fn(string $primaryKey): string => $model->aliasField($primaryKey, $alias),
-                        $model->getPrimaryKey()
-                    );
+                    $primaryKeys = array_map($model->aliasField(?, $alias), $model->getPrimaryKey());
 
                     $conditions = $this->expr();
 

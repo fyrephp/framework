@@ -883,10 +883,7 @@ class ModelSourceBuilder
      */
     protected static function formatStringArray(array $values): string
     {
-        $values = array_map(
-            static fn(string $value): string => var_export($value, true),
-            $values
-        );
+        $values = array_map(var_export(?, true), $values);
 
         return '['.implode(', ', $values).']';
     }

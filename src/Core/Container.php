@@ -702,17 +702,11 @@ class Container implements ContainerInterface
         }
 
         if ($type instanceof ReflectionUnionType) {
-            return array_any(
-                $type->getTypes(),
-                static fn(ReflectionType $member): bool => static::matchesType($value, $member, $declaringClass)
-            );
+            return array_any($type->getTypes(), static::matchesType($value, ?, $declaringClass));
         }
 
         if ($type instanceof ReflectionIntersectionType) {
-            return array_all(
-                $type->getTypes(),
-                static fn(ReflectionType $member): bool => static::matchesType($value, $member, $declaringClass)
-            );
+            return array_all($type->getTypes(), static::matchesType($value, ?, $declaringClass));
         }
 
         if (!($type instanceof ReflectionNamedType)) {

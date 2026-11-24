@@ -86,7 +86,7 @@ class RouteLocator
             $routes[] = $cache ?
                 $cache->remember(
                     str_replace('\\', '.', $namespace),
-                    fn(): array => $this->findRoutes($namespace)
+                    $this->findRoutes($namespace, ...)
                 ) :
                 $this->findRoutes($namespace);
         }

@@ -41,14 +41,9 @@ trait QueueFailureTrait
         $failures = $handler->getFailed($queue);
 
         if ($ids !== null) {
-            $ids = array_map(
-                static fn(string $id): string => trim($id),
-                explode(',', $ids)
-            );
-            $ids = array_filter(
-                $ids,
-                static fn(string $id): bool => $id !== ''
-            );
+            $ids = explode(',', $ids)
+                |> array_map(trim(...), ?)
+                |> array_filter(?, static fn(string $id): bool => $id !== '');
 
             $failures = array_intersect_key($failures, array_fill_keys($ids, true));
         }
