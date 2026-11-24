@@ -21,7 +21,6 @@
             <exclude>tests/TestCase/Commands/Make/MakeFixtureTest.php</exclude>
             <exclude>tests/TestCase/Commands/Make/MakeModelTest.php</exclude>
             <exclude>tests/TestCase/Commands/QueueWorkerCommandTest.php</exclude>
-            <exclude>tests/TestCase/DB/ConnectionManagerTest.php</exclude>
             <exclude>tests/TestCase/DB/Forge/MariaDb</exclude>
             <exclude>tests/TestCase/DB/Forge/Mysql</exclude>
             <exclude>tests/TestCase/DB/Forge/Postgres</exclude>
@@ -83,7 +82,6 @@
             <file>tests/TestCase/Auth/PolicyTest.php</file>
             <file>tests/TestCase/Commands/DbLockCommandTest.php</file>
             <file>tests/TestCase/Commands/DbMigrationCommandTest.php</file>
-            <file>tests/TestCase/DB/ConnectionManagerTest.php</file>
             <file>tests/TestCase/DB/Migration/MigrationRunnerTest.php</file>
             <file>tests/TestCase/DB/Schema/CacheTest.php</file>
             <file>tests/TestCase/Http/Session/MysqlTest.php</file>

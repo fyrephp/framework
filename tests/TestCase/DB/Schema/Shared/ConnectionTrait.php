@@ -46,8 +46,11 @@ trait ConnectionTrait
     #[Override]
     protected function tearDown(): void
     {
-        $this->cacher->clear();
-        $this->db->disconnect();
+        try {
+            $this->cacher->clear();
+        } finally {
+            $this->db->disconnect();
+        }
 
         @rmdir('tmp');
     }

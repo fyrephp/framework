@@ -3,8 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Shared\Model;
 
-use Fyre\Core\Config;
-use Fyre\DB\ConnectionManager;
+use Fyre\DB\Connection;
 use Fyre\ORM\Model;
 
 trait ModelTestTrait
@@ -71,8 +70,7 @@ trait ModelTestTrait
     public function testSetConnection(): void
     {
         $Items = $this->modelRegistry->use('Items');
-        $connection = $this->container->use(ConnectionManager::class)
-            ->build($this->container->use(Config::class)->get('Database.default'));
+        $connection = $this->createStub(Connection::class);
 
         $this->assertSame(
             $Items,

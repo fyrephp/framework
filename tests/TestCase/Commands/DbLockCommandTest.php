@@ -259,10 +259,14 @@ final class DbLockCommandTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        $this->db->query('DROP TABLE IF EXISTS fyre__locks');
+        try {
+            $this->db->query('DROP TABLE IF EXISTS fyre__locks');
+        } finally {
+            $this->db->disconnect();
 
-        fclose($this->input);
-        fclose($this->output);
-        fclose($this->error);
+            fclose($this->input);
+            fclose($this->output);
+            fclose($this->error);
+        }
     }
 }

@@ -504,14 +504,22 @@ final class DbMigrationCommandTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        $this->db->query('DROP TABLE IF EXISTS fyre__locks');
-        $this->db->query('DROP TABLE IF EXISTS fyre__migrations');
-        $this->db->query('DROP TABLE IF EXISTS test1');
-        $this->db->query('DROP TABLE IF EXISTS test2');
-        $this->db->query('DROP TABLE IF EXISTS test3');
+        try {
+            $this->db->query('DROP TABLE IF EXISTS fyre__locks');
+            $this->db->query('DROP TABLE IF EXISTS fyre__migrations');
+            $this->db->query('DROP TABLE IF EXISTS test1');
+            $this->db->query('DROP TABLE IF EXISTS test2');
+            $this->db->query('DROP TABLE IF EXISTS test3');
+        } finally {
+            $this->db->disconnect();
 
-        fclose($this->input);
-        fclose($this->output);
-        fclose($this->error);
+            if ($this->connectionManager->isLoaded('other')) {
+                $this->connectionManager->use('other')->disconnect();
+            }
+
+            fclose($this->input);
+            fclose($this->output);
+            fclose($this->error);
+        }
     }
 }

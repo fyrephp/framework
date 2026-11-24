@@ -64,7 +64,10 @@ trait ConnectionTrait
     #[Override]
     protected function tearDown(): void
     {
-        static::clearSchema($this->db);
-        $this->db->disconnect();
+        try {
+            static::clearSchema($this->db);
+        } finally {
+            $this->db->disconnect();
+        }
     }
 }

@@ -1213,28 +1213,30 @@ final class MakeModelTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        $this->db->query('DROP TABLE IF EXISTS member_blocks');
-        $this->db->query('DROP TABLE IF EXISTS saved_posts');
-        $this->db->query('DROP TABLE IF EXISTS members_posts');
-        $this->db->query('DROP TABLE IF EXISTS blocked_members');
-        $this->db->query('DROP TABLE IF EXISTS members');
-        $this->db->query('DROP TABLE IF EXISTS posts_labels');
-        $this->db->query('DROP TABLE IF EXISTS labels');
-        $this->db->query('DROP TABLE IF EXISTS posts_categories');
-        $this->db->query('DROP TABLE IF EXISTS categories');
-        $this->db->query('DROP TABLE IF EXISTS posts_tags');
-        $this->db->query('DROP TABLE IF EXISTS tags');
-        $this->db->query('DROP TABLE IF EXISTS legacy_posts');
-        $this->db->query('DROP TABLE IF EXISTS posts');
-        $this->db->query('DROP TABLE IF EXISTS audits');
-        $this->db->query('DROP TABLE IF EXISTS users');
+        try {
+            $this->db->query('DROP TABLE IF EXISTS member_blocks');
+            $this->db->query('DROP TABLE IF EXISTS saved_posts');
+            $this->db->query('DROP TABLE IF EXISTS members_posts');
+            $this->db->query('DROP TABLE IF EXISTS blocked_members');
+            $this->db->query('DROP TABLE IF EXISTS members');
+            $this->db->query('DROP TABLE IF EXISTS posts_labels');
+            $this->db->query('DROP TABLE IF EXISTS labels');
+            $this->db->query('DROP TABLE IF EXISTS posts_categories');
+            $this->db->query('DROP TABLE IF EXISTS categories');
+            $this->db->query('DROP TABLE IF EXISTS posts_tags');
+            $this->db->query('DROP TABLE IF EXISTS tags');
+            $this->db->query('DROP TABLE IF EXISTS legacy_posts');
+            $this->db->query('DROP TABLE IF EXISTS posts');
+            $this->db->query('DROP TABLE IF EXISTS audits');
+            $this->db->query('DROP TABLE IF EXISTS users');
+        } finally {
+            $this->db->disconnect();
 
-        $this->db->disconnect();
+            $connectionManager = $this->container->use(ConnectionManager::class);
 
-        $connectionManager = $this->container->use(ConnectionManager::class);
-
-        if ($connectionManager->isLoaded('alternate')) {
-            $connectionManager->use('alternate')->disconnect();
+            if ($connectionManager->isLoaded('alternate')) {
+                $connectionManager->use('alternate')->disconnect();
+            }
         }
 
         foreach (glob('tmp/*/.fyre-*') ?: [] as $filePath) {

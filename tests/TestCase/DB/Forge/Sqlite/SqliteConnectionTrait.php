@@ -44,8 +44,12 @@ trait SqliteConnectionTrait
     #[Override]
     protected function tearDown(): void
     {
-        $this->db->query('DROP TABLE IF EXISTS test');
-        $this->db->query('DROP TABLE IF EXISTS test_values');
-        $this->db->query('DROP TABLE IF EXISTS other');
+        try {
+            $this->db->query('DROP TABLE IF EXISTS test');
+            $this->db->query('DROP TABLE IF EXISTS test_values');
+            $this->db->query('DROP TABLE IF EXISTS other');
+        } finally {
+            $this->db->disconnect();
+        }
     }
 }

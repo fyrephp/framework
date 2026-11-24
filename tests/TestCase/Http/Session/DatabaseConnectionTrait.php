@@ -50,16 +50,18 @@ trait DatabaseConnectionTrait
     #[Override]
     protected function tearDown(): void
     {
-        $id = $this->session->id();
+        try {
+            $id = $this->session->id();
 
-        $this->assertTrue(
-            $this->handler->destroy($id)
-        );
+            $this->assertTrue(
+                $this->handler->destroy($id)
+            );
 
-        $this->assertTrue(
-            $this->handler->close()
-        );
-
-        $this->db->disconnect();
+            $this->assertTrue(
+                $this->handler->close()
+            );
+        } finally {
+            $this->db->disconnect();
+        }
     }
 }

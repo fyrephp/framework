@@ -6,7 +6,6 @@ namespace Tests\TestCase\DB;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\DB\ConnectionManager;
-use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\DB\TypeParser;
 use Fyre\Event\EventManager;
 use Fyre\Log\LogManager;
@@ -14,8 +13,6 @@ use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\DB\TestMysqlConnection;
-
-use function getenv;
 
 final class ConnectionManagerTest extends TestCase
 {
@@ -69,10 +66,6 @@ final class ConnectionManagerTest extends TestCase
 
     public function testClear(): void
     {
-        $this->connectionManager->clear();
-        $this->connectionManager->setConfig('default', [
-            'className' => TestMysqlConnection::class,
-        ]);
         $this->connectionManager->use();
 
         $this->connectionManager->clear();
@@ -95,10 +88,6 @@ final class ConnectionManagerTest extends TestCase
 
     public function testDropAlias(): void
     {
-        $this->connectionManager->unload('default');
-        $this->connectionManager->setConfig('default', [
-            'className' => TestMysqlConnection::class,
-        ]);
         $this->connectionManager->setConfig('test', [
             'className' => TestMysqlConnection::class,
         ]);
@@ -120,26 +109,12 @@ final class ConnectionManagerTest extends TestCase
         $this->assertArraysAreIdentical(
             [
                 'default' => [
-                    'className' => MysqlConnection::class,
-                    'host' => getenv('MYSQL_HOST'),
-                    'username' => getenv('MYSQL_USERNAME'),
-                    'password' => getenv('MYSQL_PASSWORD'),
-                    'database' => getenv('MYSQL_DATABASE'),
-                    'port' => getenv('MYSQL_PORT'),
-                    'collation' => 'utf8mb4_unicode_ci',
-                    'charset' => 'utf8mb4',
-                    'compress' => true,
+                    'className' => TestMysqlConnection::class,
+                    'database' => 'test',
                 ],
                 'other' => [
-                    'className' => MysqlConnection::class,
-                    'host' => getenv('MYSQL_HOST'),
-                    'username' => getenv('MYSQL_USERNAME'),
-                    'password' => getenv('MYSQL_PASSWORD'),
-                    'database' => getenv('MYSQL_DATABASE'),
-                    'port' => getenv('MYSQL_PORT'),
-                    'collation' => 'utf8mb4_unicode_ci',
-                    'charset' => 'utf8mb4',
-                    'compress' => true,
+                    'className' => TestMysqlConnection::class,
+                    'database' => 'other',
                 ],
             ],
             $config
@@ -149,7 +124,7 @@ final class ConnectionManagerTest extends TestCase
     public function testGetConfigEmptyKey(): void
     {
         $config = [
-            'className' => MysqlConnection::class,
+            'className' => TestMysqlConnection::class,
         ];
 
         $this->connectionManager->setConfig('', $config);
@@ -167,15 +142,8 @@ final class ConnectionManagerTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArraysAreIdentical(
             [
-                'className' => MysqlConnection::class,
-                'host' => getenv('MYSQL_HOST'),
-                'username' => getenv('MYSQL_USERNAME'),
-                'password' => getenv('MYSQL_PASSWORD'),
-                'database' => getenv('MYSQL_DATABASE'),
-                'port' => getenv('MYSQL_PORT'),
-                'collation' => 'utf8mb4_unicode_ci',
-                'charset' => 'utf8mb4',
-                'compress' => true,
+                'className' => TestMysqlConnection::class,
+                'database' => 'test',
             ],
             $config
         );
@@ -227,7 +195,7 @@ final class ConnectionManagerTest extends TestCase
         $this->assertSame(
             $this->connectionManager,
             $this->connectionManager->setConfig('test', [
-                'className' => MysqlConnection::class,
+                'className' => TestMysqlConnection::class,
             ])
         );
 
@@ -236,7 +204,7 @@ final class ConnectionManagerTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArraysAreIdentical(
             [
-                'className' => MysqlConnection::class,
+                'className' => TestMysqlConnection::class,
             ],
             $config
         );
@@ -250,7 +218,7 @@ final class ConnectionManagerTest extends TestCase
         $this->expectExceptionMessageIs('Database connection config `default` already exists.');
 
         $this->connectionManager->setConfig('default', [
-            'className' => MysqlConnection::class,
+            'className' => TestMysqlConnection::class,
         ]);
     }
 
@@ -304,7 +272,7 @@ final class ConnectionManagerTest extends TestCase
         $this->assertSame($handler1, $handler2);
 
         $this->assertInstanceOf(
-            MysqlConnection::class,
+            TestMysqlConnection::class,
             $handler1
         );
     }
@@ -319,26 +287,12 @@ final class ConnectionManagerTest extends TestCase
         $container->singleton(LogManager::class);
         $container->use(Config::class)->set('Database', [
             'default' => [
-                'className' => MysqlConnection::class,
-                'host' => getenv('MYSQL_HOST'),
-                'username' => getenv('MYSQL_USERNAME'),
-                'password' => getenv('MYSQL_PASSWORD'),
-                'database' => getenv('MYSQL_DATABASE'),
-                'port' => getenv('MYSQL_PORT'),
-                'collation' => 'utf8mb4_unicode_ci',
-                'charset' => 'utf8mb4',
-                'compress' => true,
+                'className' => TestMysqlConnection::class,
+                'database' => 'test',
             ],
             'other' => [
-                'className' => MysqlConnection::class,
-                'host' => getenv('MYSQL_HOST'),
-                'username' => getenv('MYSQL_USERNAME'),
-                'password' => getenv('MYSQL_PASSWORD'),
-                'database' => getenv('MYSQL_DATABASE'),
-                'port' => getenv('MYSQL_PORT'),
-                'collation' => 'utf8mb4_unicode_ci',
-                'charset' => 'utf8mb4',
-                'compress' => true,
+                'className' => TestMysqlConnection::class,
+                'database' => 'other',
             ],
         ]);
 

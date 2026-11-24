@@ -7,6 +7,9 @@ use Fyre\Core\Container;
 use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
 use Override;
+use PHPUnit\Framework\Attributes\After;
+
+use function gc_collect_cycles;
 
 trait DatabaseLifecycleTrait
 {
@@ -17,6 +20,13 @@ trait DatabaseLifecycleTrait
     abstract protected static function clearSchema(Connection $db): void;
 
     abstract protected static function createSchema(Connection $db): void;
+
+    #[After]
+    protected function releaseDatabaseResults(): void
+    {
+        // An unreachable ORM result can still hold its PDO statement and connection.
+        gc_collect_cycles();
+    }
 
     protected static function setUpSchema(): void
     {
