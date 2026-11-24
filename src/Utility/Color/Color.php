@@ -593,8 +593,7 @@ abstract class Color implements Stringable
 
             if (preg_match('/\Acolor\((a98-rgb|display-p3(?:-linear)?|prophoto-rgb|rec2020|srgb(?:-linear)?|xyz(?:-d50|-d65)?)\s+(.+)\)\z/', $string, $match)) {
                 $space = $match[1];
-                $parts = static::parseCssArguments($match[2]);
-                $values = array_map(static::parseCssNumber(...), $parts);
+                $values = static::parseCssArguments($match[2]) |> array_map(static::parseCssNumber(...), ?);
 
                 switch ($space) {
                     case 'a98-rgb':
