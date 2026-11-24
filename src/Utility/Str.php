@@ -451,10 +451,10 @@ abstract class Str
      */
     public static function pascal(string $string): string
     {
-        $words = explode(' ', str_replace(['-', '_'], ' ', $string));
-        $words = array_map(ucfirst(...), $words);
-
-        return implode('', $words);
+        return str_replace(['-', '_'], ' ', $string)
+            |> explode(' ', ?)
+            |> array_map(ucfirst(...), ?)
+            |> implode('', ?);
     }
 
     /**

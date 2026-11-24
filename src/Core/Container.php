@@ -626,7 +626,7 @@ class Container implements ContainerInterface
             if ($paramType !== null) {
                 $matchedKey = array_find_key(
                     $unmatchedArguments,
-                    static fn(mixed $argument): bool => static::matchesType($argument, $paramType, $parameter->getDeclaringClass())
+                    static::matchesType(?, $paramType, $parameter->getDeclaringClass())
                 );
 
                 if ($matchedKey !== null) {

@@ -37,9 +37,9 @@ trait EnumCaseParserTrait
      */
     protected function parseEnumCases(string|null $cases): array
     {
-        $cases = explode(',', $cases ?? '');
-        $cases = array_map(trim(...), $cases);
-        $cases = array_filter($cases, static fn($case) => $case !== '');
+        $cases = explode(',', $cases ?? '')
+            |> array_map(trim(...), ?)
+            |> array_filter(?, static fn($case) => $case !== '');
 
         if ($cases === []) {
             return [

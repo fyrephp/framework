@@ -2153,7 +2153,7 @@ class Model implements EventListenerInterface
                 ->execute()
                 ->fetch() ?? [];
 
-            $this->getConnection()->afterRollback(static fn(): Entity => $entity->setNew(true));
+            $this->getConnection()->afterRollback($entity->setNew(true, ...));
 
             foreach ($primaryKeys as $primaryKey) {
                 $primaryKey = (string) $primaryKey;
