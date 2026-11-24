@@ -19,13 +19,13 @@ use function sprintf;
 class DbRollbackCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'db:rollback';
+    protected readonly string|null $alias = 'db:rollback';
 
     #[Override]
-    protected string $description = 'Perform database rollbacks.';
+    protected readonly string $description = 'Perform database rollbacks.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'db' => [
             'help' => 'Database connection to use.',
             'default' => ConnectionManager::DEFAULT,

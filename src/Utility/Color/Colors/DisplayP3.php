@@ -15,6 +15,7 @@ class DisplayP3 extends Color
 {
     use RgbTrait;
 
+    #[Override]
     protected const COLOR_SPACE = 'display-p3';
 
     /**

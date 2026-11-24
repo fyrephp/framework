@@ -15,6 +15,7 @@ use function round;
  */
 class Hsl extends Color
 {
+    #[Override]
     protected const COLOR_SPACE = 'hsl';
 
     public readonly float $hue;

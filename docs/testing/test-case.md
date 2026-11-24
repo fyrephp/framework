@@ -84,7 +84,7 @@ Arguments:
 - `$message` (`string`): the skip message to display.
 
 ```php
-$this->skipUnless(PHP_VERSION_ID >= 80500, 'PHP 8.5+ is required for this test.');
+$this->skipUnless(extension_loaded('redis'), 'The Redis extension is required for this test.');
 ```
 
 ## Behavior notes

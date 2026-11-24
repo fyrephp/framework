@@ -9,7 +9,7 @@ use Override;
 class ArgumentsCommand extends Command
 {
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'value' => [
             'text' => 'Please enter a value',
             'required' => true,

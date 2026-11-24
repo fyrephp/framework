@@ -21,13 +21,13 @@ use function sprintf;
 class MakeCellCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:cell';
+    protected readonly string|null $alias = 'make:cell';
 
     #[Override]
-    protected string $description = 'Generate a new cell.';
+    protected readonly string $description = 'Generate a new cell.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the cell to generate.',
             'text' => 'Please enter a name for the cell',

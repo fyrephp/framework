@@ -23,13 +23,13 @@ use function sprintf;
 class MakeLangCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:lang';
+    protected readonly string|null $alias = 'make:lang';
 
     #[Override]
-    protected string $description = 'Generate a new language file.';
+    protected readonly string $description = 'Generate a new language file.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'file' => [
             'help' => 'Name of the language file to generate.',
             'text' => 'Please enter the language file',

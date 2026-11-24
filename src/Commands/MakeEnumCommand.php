@@ -22,13 +22,13 @@ use function sprintf;
 class MakeEnumCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:enum';
+    protected readonly string|null $alias = 'make:enum';
 
     #[Override]
-    protected string $description = 'Generate a new enum.';
+    protected readonly string $description = 'Generate a new enum.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the enum to generate.',
             'text' => 'Please enter a name for the enum',

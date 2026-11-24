@@ -23,13 +23,13 @@ use function sprintf;
 class MakeElementCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:element';
+    protected readonly string|null $alias = 'make:element';
 
     #[Override]
-    protected string $description = 'Generate a new element.';
+    protected readonly string $description = 'Generate a new element.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'template' => [
             'help' => 'Name of the element to generate.',
             'text' => 'Please enter the element template',

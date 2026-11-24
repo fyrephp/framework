@@ -15,6 +15,7 @@ class Rec2020 extends Color
 {
     use RgbTrait;
 
+    #[Override]
     protected const COLOR_SPACE = 'rec2020';
 
     /**

@@ -10,13 +10,13 @@ use Override;
 class {class} extends Command
 {
     #[Override]
-    protected string|null $alias = '{alias}';
+    protected readonly string|null $alias = '{alias}';
 
     #[Override]
-    protected string $description = '{description}';
+    protected readonly string $description = '{description}';
 
     #[Override]
-    protected array $options = [];
+    protected readonly array $options = [];
 
     public function __construct(Console $io)
     {

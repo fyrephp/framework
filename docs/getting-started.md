@@ -33,7 +33,7 @@ If you only need an individual subsystem, install the same package and resolve o
 
 FyreFramework requires:
 
-- PHP 8.5 or later
+- PHP 8.6 or later
 - `ext-intl`
 - `ext-mbstring`
 - `ext-sodium`

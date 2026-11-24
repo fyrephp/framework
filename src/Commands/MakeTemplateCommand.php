@@ -23,13 +23,13 @@ use function sprintf;
 class MakeTemplateCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:template';
+    protected readonly string|null $alias = 'make:template';
 
     #[Override]
-    protected string $description = 'Generate a new template.';
+    protected readonly string $description = 'Generate a new template.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'template' => [
             'help' => 'Name of the template to generate.',
             'text' => 'Please enter the template',

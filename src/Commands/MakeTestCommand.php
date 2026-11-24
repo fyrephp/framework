@@ -21,13 +21,13 @@ use function sprintf;
 class MakeTestCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:test';
+    protected readonly string|null $alias = 'make:test';
 
     #[Override]
-    protected string $description = 'Generate a new test case.';
+    protected readonly string $description = 'Generate a new test case.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the test to generate.',
             'text' => 'Please enter a name for the test',

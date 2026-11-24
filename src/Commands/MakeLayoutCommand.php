@@ -23,13 +23,13 @@ use function sprintf;
 class MakeLayoutCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:layout';
+    protected readonly string|null $alias = 'make:layout';
 
     #[Override]
-    protected string $description = 'Generate a new layout.';
+    protected readonly string $description = 'Generate a new layout.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'template' => [
             'help' => 'Name of the layout to generate.',
             'text' => 'Please enter the layout template',

@@ -9,10 +9,10 @@ use Override;
 class TestCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'tester';
+    protected readonly string|null $alias = 'tester';
 
     #[Override]
-    protected string $description = 'This is a test command.';
+    protected readonly string $description = 'This is a test command.';
 
     public function run(): void {}
 }

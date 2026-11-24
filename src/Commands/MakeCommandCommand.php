@@ -23,13 +23,13 @@ use function strtolower;
 class MakeCommandCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:command';
+    protected readonly string|null $alias = 'make:command';
 
     #[Override]
-    protected string $description = 'Generate a new command.';
+    protected readonly string $description = 'Generate a new command.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the command to generate.',
             'text' => 'Please enter a name for the command',

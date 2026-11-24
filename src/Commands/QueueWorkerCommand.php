@@ -19,13 +19,13 @@ use function sprintf;
 class QueueWorkerCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'queue:worker';
+    protected readonly string|null $alias = 'queue:worker';
 
     #[Override]
-    protected string $description = 'Start a queue worker.';
+    protected readonly string $description = 'Start a queue worker.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'config' => [
             'help' => 'Queue configuration to use.',
             'default' => QueueManager::DEFAULT,

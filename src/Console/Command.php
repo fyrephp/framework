@@ -18,16 +18,16 @@ abstract class Command
 
     public const CODE_SUCCESS = 0;
 
-    protected string|null $alias = null;
+    protected readonly string|null $alias = null;
 
-    protected string $description = '';
+    protected readonly string $description = '';
 
     protected Console $io;
 
     /**
      * @var array<string, array<string, mixed>|string>
      */
-    protected array $options = [];
+    protected readonly array $options = [];
 
     /**
      * Constructs a Command.

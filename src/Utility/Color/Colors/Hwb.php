@@ -15,6 +15,7 @@ use function round;
  */
 class Hwb extends Color
 {
+    #[Override]
     protected const COLOR_SPACE = 'hwb';
 
     public readonly float $blackness;

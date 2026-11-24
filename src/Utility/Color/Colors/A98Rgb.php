@@ -15,6 +15,7 @@ class A98Rgb extends Color
 {
     use RgbTrait;
 
+    #[Override]
     protected const COLOR_SPACE = 'a98-rgb';
 
     /**

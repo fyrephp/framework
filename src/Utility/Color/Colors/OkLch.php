@@ -17,6 +17,7 @@ class OkLch extends Color
 {
     use LchTrait;
 
+    #[Override]
     protected const COLOR_SPACE = 'oklch';
 
     /**

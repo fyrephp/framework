@@ -20,13 +20,13 @@ use function sprintf;
 class MakeJobCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:job';
+    protected readonly string|null $alias = 'make:job';
 
     #[Override]
-    protected string $description = 'Generate a new job.';
+    protected readonly string $description = 'Generate a new job.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the job to generate.',
             'text' => 'Please enter a name for the job',

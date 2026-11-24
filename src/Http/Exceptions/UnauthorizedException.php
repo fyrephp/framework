@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Fyre\Http\Exceptions;
 
+use Override;
+
 /**
  * Represents an Unauthorized HTTP exception (401).
  *
@@ -10,7 +12,9 @@ namespace Fyre\Http\Exceptions;
  */
 class UnauthorizedException extends HttpException
 {
+    #[Override]
     protected const DEFAULT_CODE = 401;
 
+    #[Override]
     protected const DEFAULT_MESSAGE = 'Unauthorized';
 }

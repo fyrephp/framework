@@ -320,13 +320,13 @@ use Override;
 class ClearCacheCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'app:clear-cache';
+    protected readonly string|null $alias = 'app:clear-cache';
 
     #[Override]
-    protected string $description = 'Delete a cache key.';
+    protected readonly string $description = 'Delete a cache key.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'cache' => [
             'help' => 'Cache configuration to use.',
             'default' => 'default',

@@ -10,7 +10,7 @@ use Override;
 class TypeOptionsCommand extends Command
 {
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'test' => [
             'text' => 'What is the date?',
             'as' => 'date',

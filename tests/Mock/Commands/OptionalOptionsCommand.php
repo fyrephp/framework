@@ -9,7 +9,7 @@ use Override;
 class OptionalOptionsCommand extends Command
 {
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'choice' => [
             'values' => [
                 'a' => 'Option A',

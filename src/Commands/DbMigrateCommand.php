@@ -19,13 +19,13 @@ use function sprintf;
 class DbMigrateCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'db:migrate';
+    protected readonly string|null $alias = 'db:migrate';
 
     #[Override]
-    protected string $description = 'Perform database migrations.';
+    protected readonly string $description = 'Perform database migrations.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'db' => [
             'help' => 'Database connection to use.',
             'default' => ConnectionManager::DEFAULT,

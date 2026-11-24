@@ -22,13 +22,13 @@ use const ARRAY_FILTER_USE_KEY;
 class QueueStatsCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'queue:stats';
+    protected readonly string|null $alias = 'queue:stats';
 
     #[Override]
-    protected string $description = 'Display stats for the queue.';
+    protected readonly string $description = 'Display stats for the queue.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'config' => [
             'help' => 'Queue configuration to display.',
         ],

@@ -15,6 +15,7 @@ class DisplayP3Linear extends Color
 {
     use RgbTrait;
 
+    #[Override]
     protected const COLOR_SPACE = 'display-p3-linear';
 
     /**

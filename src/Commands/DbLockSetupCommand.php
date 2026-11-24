@@ -17,13 +17,13 @@ use Override;
 class DbLockSetupCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'db:lock:setup';
+    protected readonly string|null $alias = 'db:lock:setup';
 
     #[Override]
-    protected string $description = 'Initialize database lock storage.';
+    protected readonly string $description = 'Initialize database lock storage.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'db' => [
             'help' => 'Database connection to use.',
             'default' => ConnectionManager::DEFAULT,

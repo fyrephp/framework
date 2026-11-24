@@ -15,6 +15,7 @@ class Srgb extends Color
 {
     use RgbTrait;
 
+    #[Override]
     protected const COLOR_SPACE = 'srgb';
 
     /**

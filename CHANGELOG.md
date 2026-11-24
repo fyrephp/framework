@@ -20,6 +20,8 @@ This file records user-visible changes to FyreFramework. Internal refactors, tes
 
 ### Changed
 
+- Require PHP 8.6 or later.
+- Make command metadata readonly. Custom commands that redeclare `$alias`, `$description`, or `$options` must include `readonly` on those properties.
 - Database and ORM queries now require `retrySafe: true` to retry execution after a disconnect. Outside a transaction, recognized disconnects during statement preparation still trigger one automatic retry.
 - Memcached `clear()` now throws `CacheException` unless the prefix is empty and `flushServer` is `true`. Enabling this option permits a server-wide flush, including other applications’ entries and locks.
 

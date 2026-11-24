@@ -40,13 +40,13 @@ use function substr;
 class MakeModelCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:model';
+    protected readonly string|null $alias = 'make:model';
 
     #[Override]
-    protected string $description = 'Generate a new model.';
+    protected readonly string $description = 'Generate a new model.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the model to generate.',
             'text' => 'Please enter a name for the model',

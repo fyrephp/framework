@@ -24,13 +24,13 @@ class QueueFailedCommand extends Command
     use QueueFailureTrait;
 
     #[Override]
-    protected string|null $alias = 'queue:failed';
+    protected readonly string|null $alias = 'queue:failed';
 
     #[Override]
-    protected string $description = 'Display failed queue jobs.';
+    protected readonly string $description = 'Display failed queue jobs.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'config' => [
             'help' => 'Queue configuration to use.',
             'default' => QueueManager::DEFAULT,

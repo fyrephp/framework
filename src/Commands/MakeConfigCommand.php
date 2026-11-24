@@ -23,13 +23,13 @@ use function sprintf;
 class MakeConfigCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:config';
+    protected readonly string|null $alias = 'make:config';
 
     #[Override]
-    protected string $description = 'Generate a new config file.';
+    protected readonly string $description = 'Generate a new config file.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'file' => [
             'help' => 'Name of the config file to generate.',
             'text' => 'Please enter the config file',

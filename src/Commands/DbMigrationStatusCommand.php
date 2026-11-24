@@ -19,13 +19,13 @@ use function array_map;
 class DbMigrationStatusCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'db:status';
+    protected readonly string|null $alias = 'db:status';
 
     #[Override]
-    protected string $description = 'Display database migration status.';
+    protected readonly string $description = 'Display database migration status.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'db' => [
             'help' => 'Database connection to use.',
             'default' => ConnectionManager::DEFAULT,

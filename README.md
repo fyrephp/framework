@@ -33,7 +33,7 @@ Install the `fyre/framework` package and use individual subsystems as needed, or
 
 ## Requirements
 
-- PHP >= 8.5
+- PHP >= 8.6
 - Required PHP extensions: `ext-intl`, `ext-mbstring`, `ext-sodium`
 - For database connections: `ext-pdo` plus the matching PDO driver such as `ext-pdo_mysql`, `ext-pdo_pgsql`, or `ext-pdo_sqlite`
 

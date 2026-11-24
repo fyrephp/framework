@@ -20,13 +20,13 @@ use function sprintf;
 class MakeControllerCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:controller';
+    protected readonly string|null $alias = 'make:controller';
 
     #[Override]
-    protected string $description = 'Generate a new controller.';
+    protected readonly string $description = 'Generate a new controller.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the controller to generate.',
             'text' => 'Please enter a name for the controller',

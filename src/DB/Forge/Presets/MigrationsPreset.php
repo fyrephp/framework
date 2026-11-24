@@ -18,6 +18,7 @@ use Override;
  */
 class MigrationsPreset extends Preset
 {
+    #[Override]
     public const TABLE = 'fyre__migrations';
 
     /**

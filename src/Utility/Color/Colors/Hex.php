@@ -12,6 +12,7 @@ use function array_search;
  */
 class Hex extends Rgb
 {
+    #[Override]
     protected const COLOR_SPACE = 'hex';
 
     /**

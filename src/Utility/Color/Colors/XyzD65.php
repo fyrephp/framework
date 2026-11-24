@@ -15,6 +15,7 @@ class XyzD65 extends Color
 {
     use XyzTrait;
 
+    #[Override]
     protected const COLOR_SPACE = 'xyz-d65';
 
     /**

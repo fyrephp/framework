@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Fyre\Http\Exceptions;
 
+use Override;
+
 /**
  * Represents a Method Not Allowed HTTP exception (405).
  *
@@ -11,7 +13,9 @@ namespace Fyre\Http\Exceptions;
  */
 class MethodNotAllowedException extends HttpException
 {
+    #[Override]
     protected const DEFAULT_CODE = 405;
 
+    #[Override]
     protected const DEFAULT_MESSAGE = 'Method Not Allowed';
 }

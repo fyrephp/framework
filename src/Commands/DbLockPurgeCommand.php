@@ -21,13 +21,13 @@ use function sprintf;
 class DbLockPurgeCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'db:lock:purge';
+    protected readonly string|null $alias = 'db:lock:purge';
 
     #[Override]
-    protected string $description = 'Remove expired database locks.';
+    protected readonly string $description = 'Remove expired database locks.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'db' => [
             'help' => 'Database connection to use.',
             'default' => ConnectionManager::DEFAULT,

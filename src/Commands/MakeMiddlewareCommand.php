@@ -20,13 +20,13 @@ use function sprintf;
 class MakeMiddlewareCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:middleware';
+    protected readonly string|null $alias = 'make:middleware';
 
     #[Override]
-    protected string $description = 'Generate a new middleware.';
+    protected readonly string $description = 'Generate a new middleware.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the middleware to generate.',
             'text' => 'Please enter a name for the middleware',

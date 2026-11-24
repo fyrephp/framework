@@ -23,13 +23,13 @@ use function sprintf;
 class MakeCellTemplateCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:cell_template';
+    protected readonly string|null $alias = 'make:cell_template';
 
     #[Override]
-    protected string $description = 'Generate a new cell template.';
+    protected readonly string $description = 'Generate a new cell template.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'template' => [
             'help' => 'Name of the cell template to generate.',
             'text' => 'Please enter the cell template',

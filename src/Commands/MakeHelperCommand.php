@@ -21,13 +21,13 @@ use function sprintf;
 class MakeHelperCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:helper';
+    protected readonly string|null $alias = 'make:helper';
 
     #[Override]
-    protected string $description = 'Generate a new helper.';
+    protected readonly string $description = 'Generate a new helper.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the helper to generate.',
             'text' => 'Please enter a name for the helper',

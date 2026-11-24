@@ -21,13 +21,13 @@ use function sprintf;
 class MakePolicyCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:policy';
+    protected readonly string|null $alias = 'make:policy';
 
     #[Override]
-    protected string $description = 'Generate a new policy.';
+    protected readonly string $description = 'Generate a new policy.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the policy to generate.',
             'text' => 'Please enter a name for the policy',

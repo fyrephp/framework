@@ -17,6 +17,7 @@ class Lab extends Color
 {
     use LabTrait;
 
+    #[Override]
     protected const COLOR_SPACE = 'lab';
 
     /**

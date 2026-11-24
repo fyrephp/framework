@@ -27,7 +27,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.5"
+          php-version: "8.6"
           extensions: exif, gd, intl, mbstring
           coverage: none
 
@@ -63,7 +63,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.5"
+          php-version: "8.6"
           extensions: exif, gd, intl, mbstring, openssl, pcntl, posix, sockets, sodium
           coverage: pcov
 
@@ -84,7 +84,7 @@ jobs:
           disable_search: true
           files: ./coverage.xml
           flags: core
-          name: core-php85
+          name: core-php86
 
   tests-integration:
     name: Tests (${{ matrix.suite }})
@@ -119,7 +119,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.5"
+          php-version: "8.6"
           extensions: curl, intl, mbstring, memcached, pcntl, pdo_mysql, pdo_pgsql, pdo_sqlite, redis
           coverage: pcov
 
@@ -169,7 +169,7 @@ jobs:
           disable_search: true
           files: ./coverage.xml
           flags: ${{ matrix.suite }}
-          name: ${{ matrix.suite }}-php85
+          name: ${{ matrix.suite }}-php86
 
       - name: Dump service logs (on failure)
         if: failure() && matrix.service != ''

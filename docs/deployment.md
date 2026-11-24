@@ -54,7 +54,7 @@ composer install --no-dev --optimize-autoloader --no-interaction
 composer check-platform-reqs --no-dev
 ```
 
-The target runtime must provide PHP 8.5 or later and the required extensions. Install the
+The target runtime must provide PHP 8.6 or later and the required extensions. Install the
 feature-specific optional extensions and external programs used by the application as well. For
 example, database connections need PDO and a matching driver, queue workers need `ext-pcntl`,
 and PDF rendering needs an executable Chrome or Chromium binary. See

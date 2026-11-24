@@ -25,13 +25,13 @@ use function substr;
 class MakeFixtureCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:fixture';
+    protected readonly string|null $alias = 'make:fixture';
 
     #[Override]
-    protected string $description = 'Generate a new fixture.';
+    protected readonly string $description = 'Generate a new fixture.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the fixture to generate.',
             'text' => 'Please enter a name for the fixture',

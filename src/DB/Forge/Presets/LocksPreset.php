@@ -19,6 +19,7 @@ class LocksPreset extends Preset
 {
     public const NAME_LENGTH = 255;
 
+    #[Override]
     public const TABLE = 'fyre__locks';
 
     /**

@@ -28,13 +28,13 @@ use function sprintf;
 class MakeEntityCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:entity';
+    protected readonly string|null $alias = 'make:entity';
 
     #[Override]
-    protected string $description = 'Generate a new entity.';
+    protected readonly string $description = 'Generate a new entity.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the entity to generate.',
             'text' => 'Please enter a name for the entity',

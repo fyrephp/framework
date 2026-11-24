@@ -17,6 +17,7 @@ class OkLab extends Color
 {
     use LabTrait;
 
+    #[Override]
     protected const COLOR_SPACE = 'oklab';
 
     /**

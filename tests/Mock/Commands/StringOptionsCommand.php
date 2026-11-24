@@ -9,7 +9,7 @@ use Override;
 class StringOptionsCommand extends Command
 {
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'value' => 'Please enter a value',
     ];
 

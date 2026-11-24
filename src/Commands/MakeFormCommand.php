@@ -20,13 +20,13 @@ use function sprintf;
 class MakeFormCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:form';
+    protected readonly string|null $alias = 'make:form';
 
     #[Override]
-    protected string $description = 'Generate a new form.';
+    protected readonly string $description = 'Generate a new form.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the form to generate.',
             'text' => 'Please enter a name for the form',

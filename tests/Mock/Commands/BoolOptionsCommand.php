@@ -9,7 +9,7 @@ use Override;
 class BoolOptionsCommand extends Command
 {
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'test' => [
             'text' => 'Do you agree?',
             'as' => 'boolean',

@@ -22,13 +22,13 @@ use function sprintf;
 class MakeMigrationCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'make:migration';
+    protected readonly string|null $alias = 'make:migration';
 
     #[Override]
-    protected string $description = 'Generate a new migration.';
+    protected readonly string $description = 'Generate a new migration.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'name' => [
             'help' => 'Name of the migration to generate.',
             'required' => true,

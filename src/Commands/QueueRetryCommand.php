@@ -22,13 +22,13 @@ class QueueRetryCommand extends Command
     use QueueFailureTrait;
 
     #[Override]
-    protected string|null $alias = 'queue:retry';
+    protected readonly string|null $alias = 'queue:retry';
 
     #[Override]
-    protected string $description = 'Retry failed queue jobs.';
+    protected readonly string $description = 'Retry failed queue jobs.';
 
     #[Override]
-    protected array $options = [
+    protected readonly array $options = [
         'ids' => [
             'help' => 'Comma-separated failed job IDs.',
         ],
