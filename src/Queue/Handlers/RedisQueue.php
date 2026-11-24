@@ -280,7 +280,7 @@ class RedisQueue extends Queue
 
         $payload = $data['payload'];
         $uniqueHash = static::getUniqueHash($payload);
-        $message = substr($payload, static::PAYLOAD_HEADER_LENGTH) |> @unserialize(...);
+        $message = @unserialize(substr($payload, static::PAYLOAD_HEADER_LENGTH));
 
         if (!($message instanceof Message)) {
             $this->settleReservation($queue, $data['reservation'], 'discard', $uniqueHash);
