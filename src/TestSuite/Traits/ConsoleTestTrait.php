@@ -297,8 +297,7 @@ trait ConsoleTestTrait
 
         rewind($stream);
 
-        $lines = stream_get_contents($stream);
-        $lines = rtrim($lines, PHP_EOL);
+        $lines = stream_get_contents($stream) |> rtrim(?, PHP_EOL);
 
         if ($lines === '') {
             return [];

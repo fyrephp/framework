@@ -45,8 +45,7 @@ class DateTime extends AbstractDateTime
     {
         $dateTime = new static(null, $timeZone, $locale);
 
-        $dateArray = array_pad($dateArray, 3, 1);
-        $dateArray = array_pad($dateArray, 7, 0);
+        $dateArray = array_pad($dateArray, 3, 1) |> array_pad(?, 7, 0);
 
         $keys = ['year', 'month', 'date', 'hour', 'minute', 'second', 'millisecond'];
         $dateArray[1]--;
