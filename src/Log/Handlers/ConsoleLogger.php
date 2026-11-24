@@ -61,8 +61,7 @@ class ConsoleLogger extends Logger
             return;
         }
 
-        $message = static::interpolate($message, $context);
-        $message = $this->format((string) $level, $message);
+        $message = static::interpolate($message, $context) |> $this->format((string) $level, ?);
 
         @fwrite($this->handle, $message.PHP_EOL);
     }

@@ -124,8 +124,7 @@ class FileLogger extends Logger
             }
         }
 
-        $message = static::interpolate($message, $context);
-        $message = $this->format($level, $message);
+        $message = static::interpolate($message, $context) |> $this->format($level, ?);
 
         @fwrite($handle, $message.PHP_EOL);
         @fclose($handle);
