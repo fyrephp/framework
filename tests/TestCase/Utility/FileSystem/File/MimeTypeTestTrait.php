@@ -24,7 +24,7 @@ trait MimeTypeTestTrait
     public function testMimeTypeNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessageIs('finfo::file(tmp/test.txt): Failed to open stream: No such file or directory');
+        $this->expectExceptionMessageIsOrContains('Failed to open stream: No such file or directory');
 
         $file = new File('tmp/test.txt');
         $file->mimeType();

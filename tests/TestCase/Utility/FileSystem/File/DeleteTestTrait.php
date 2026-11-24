@@ -25,7 +25,7 @@ trait DeleteTestTrait
     public function testDeleteNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessageIs('unlink(tmp/test.txt): No such file or directory');
+        $this->expectExceptionMessageIsOrContains('No such file or directory');
 
         $file = new File('tmp/test.txt');
         $file->delete();

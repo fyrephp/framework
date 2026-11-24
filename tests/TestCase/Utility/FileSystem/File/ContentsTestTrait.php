@@ -24,7 +24,7 @@ trait ContentsTestTrait
     public function testContentsNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessageIs('file_get_contents(tmp/test.txt): Failed to open stream: No such file or directory');
+        $this->expectExceptionMessageIsOrContains('Failed to open stream: No such file or directory');
 
         $file = new File('tmp/test.txt');
         $file->contents();

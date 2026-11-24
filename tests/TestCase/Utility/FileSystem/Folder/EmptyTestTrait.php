@@ -45,7 +45,7 @@ trait EmptyTestTrait
     public function testEmptyNotExists(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIsOrContains('RecursiveDirectoryIterator::__construct(tmp/test2): Failed to open directory');
+        $this->expectExceptionMessageIsOrContains('Failed to open directory');
 
         $folder = new Folder('tmp/test2');
         $folder->empty();

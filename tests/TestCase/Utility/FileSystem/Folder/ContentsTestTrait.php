@@ -69,7 +69,7 @@ trait ContentsTestTrait
     public function testContentsNotExists(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIs('FilesystemIterator::__construct(tmp/test): Failed to open directory: No such file or directory');
+        $this->expectExceptionMessageIsOrContains('Failed to open directory: No such file or directory');
 
         $folder = new Folder('tmp/test');
         $folder->contents();

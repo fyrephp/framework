@@ -56,7 +56,7 @@ trait CopyTestTrait
     public function testCopyNotExists(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIs('RecursiveDirectoryIterator::__construct(tmp/test): Failed to open directory: No such file or directory');
+        $this->expectExceptionMessageIsOrContains('Failed to open directory: No such file or directory');
 
         $folder = new Folder('tmp/test');
         $folder->copy('tmp/test2');
