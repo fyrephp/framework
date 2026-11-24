@@ -4,20 +4,23 @@ declare(strict_types=1);
 namespace Fyre\Http\Session;
 
 use Fyre\Core\Traits\DebugTrait;
+use Fyre\Http\Session\Exceptions\SessionException;
 use InvalidArgumentException;
 use Override;
 use SessionHandlerInterface;
+use SessionIdInterface;
 use SessionUpdateTimestampHandlerInterface;
 
 use function array_replace_recursive;
 use function preg_match;
+use function session_create_id;
 
 /**
  * Provides a base class for custom {@see SessionHandlerInterface} implementations.
  *
  * Supplies default configuration and a prefixed session key helper for {@see Session}.
  */
-abstract class SessionHandler implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface
+abstract class SessionHandler implements SessionHandlerInterface, SessionIdInterface, SessionUpdateTimestampHandlerInterface
 {
     use DebugTrait;
 
@@ -62,6 +65,19 @@ abstract class SessionHandler implements SessionHandlerInterface, SessionUpdateT
     public function close(): bool
     {
         return true;
+    }
+
+    /**
+     * Creates a session ID using PHP's session ID generator.
+     *
+     * @return string The session ID.
+     *
+     * @throws SessionException If the session ID cannot be generated.
+     */
+    #[Override]
+    public function create_sid(): string
+    {
+        return session_create_id() ?: throw new SessionException('Failed to create a session ID.');
     }
 
     /**

@@ -247,14 +247,14 @@ class AsyncPromise extends Promise
             return false;
         }
 
-        $output = unserialize($this->buffer);
+        socket_close($this->socket);
+
+        $output = $this->buffer === '' ? null : unserialize($this->buffer);
         $this->buffer = '';
 
         if (!is_array($output) || count($output) !== 2) {
             throw new RuntimeException('Unable to read response from child process.');
         }
-
-        socket_close($this->socket);
 
         [$reason, $value] = $output;
 

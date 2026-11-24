@@ -44,7 +44,6 @@ use function str_repeat;
 use function uasort;
 
 use const JSON_PRETTY_PRINT;
-use const SORT_LOCALE_STRING;
 use const SORT_NATURAL;
 use const SORT_NUMERIC;
 use const SORT_REGULAR;
@@ -69,7 +68,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
     use MacroTrait;
     use StaticMacroTrait;
 
-    public const SORT_LOCALE = SORT_LOCALE_STRING;
+    public const SORT_LOCALE = Arr::SORT_LOCALE;
 
     public const SORT_NATURAL = SORT_NATURAL;
 

@@ -39,6 +39,18 @@ class FileSessionHandler extends SessionHandler
     #[SensitiveProperty]
     protected string $path;
 
+    #[SensitiveProperty]
+    protected string|null $pendingSessionId = null;
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function create_sid(): string
+    {
+        return $this->pendingSessionId = parent::create_sid();
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -129,10 +141,17 @@ class FileSessionHandler extends SessionHandler
         $key = $this->prepareKey($sessionId);
         $filePath = Path::join($this->path, $key);
 
-        $handle = @fopen($filePath, 'rb');
+        // PHP may refresh an empty session before its first write().
+        $isNew = $sessionId === $this->pendingSessionId;
 
-        if (!is_resource($handle)) {
-            return '';
+        if ($isNew) {
+            $this->pendingSessionId = null;
+        }
+
+        $handle = @fopen($filePath, $isNew ? 'c+b' : 'rb');
+
+        if ($handle === false) {
+            return $isNew ? false : '';
         }
 
         if (!@flock($handle, LOCK_SH)) {
@@ -145,9 +164,7 @@ class FileSessionHandler extends SessionHandler
 
         @fclose($handle);
 
-        return $data === false ?
-            false :
-            $data;
+        return $data;
     }
 
     /**

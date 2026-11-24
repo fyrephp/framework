@@ -51,7 +51,6 @@ use const ARRAY_FILTER_USE_BOTH;
 use const ARRAY_FILTER_USE_KEY;
 use const COUNT_NORMAL;
 use const COUNT_RECURSIVE;
-use const SORT_LOCALE_STRING;
 use const SORT_NATURAL;
 use const SORT_NUMERIC;
 use const SORT_REGULAR;
@@ -76,7 +75,8 @@ abstract class Arr
 
     public const FILTER_VALUE = 0;
 
-    public const SORT_LOCALE = SORT_LOCALE_STRING;
+    /** Native LC_COLLATE sort flag. PHP 8.6 deprecates the constant name. */
+    public const SORT_LOCALE = 5;
 
     public const SORT_NATURAL = SORT_NATURAL;
 

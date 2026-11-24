@@ -221,6 +221,8 @@ final class FileTest extends TestCase
             $this->handler->read($id)
         );
 
+        $this->assertFalse($this->handler->validateId($id));
+
         $this->assertTrue(
             $this->handler->write($id, 'data')
         );
@@ -229,6 +231,20 @@ final class FileTest extends TestCase
             'data',
             $this->handler->read($id)
         );
+    }
+
+    public function testReadPreservesPendingSessionId(): void
+    {
+        $id = $this->handler->create_sid();
+
+        try {
+            $this->assertSame('', $this->handler->read('missing'));
+            $this->assertFalse($this->handler->validateId('missing'));
+            $this->assertSame('', $this->handler->read($id));
+            $this->assertTrue($this->handler->validateId($id));
+        } finally {
+            $this->handler->destroy($id);
+        }
     }
 
     public function testStrictModeRejectsUnknownSessionId(): void
@@ -246,6 +262,10 @@ final class FileTest extends TestCase
 
         $this->assertTrue(
             session_write_close()
+        );
+
+        $this->assertTrue(
+            $this->handler->validateId($generatedId)
         );
 
         $this->assertTrue(
