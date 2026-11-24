@@ -212,7 +212,8 @@ class Loader
                 continue;
             }
 
-            $testPath = substr($className, $prefixLength - 1) |> str_replace('\\', DIRECTORY_SEPARATOR, ?);
+            $testPath = substr($className, $prefixLength - 1)
+                |> str_replace('\\', DIRECTORY_SEPARATOR, ?);
             $testPath .= '.php';
 
             if (!str_ends_with($filePath, $testPath)) {

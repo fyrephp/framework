@@ -197,8 +197,7 @@ class Uri implements Stringable, UriInterface
     public function getSegments(): array
     {
         if ($this->segments === null) {
-            $path = $this->uri->getPath();
-            $path = trim($path, '/');
+            $path = $this->uri->getPath() |> trim(?, '/');
 
             $this->segments = $path === '' ? [] : explode('/', $path);
         }

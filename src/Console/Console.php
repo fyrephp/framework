@@ -213,8 +213,8 @@ class Console
             }
 
             foreach ($options as $option => $description) {
-                $key = str_pad('  ['.$option.']', $maxLength + 6);
-                $key = static::style($key, static::CYAN);
+                $key = str_pad('  ['.$option.']', $maxLength + 6)
+                    |> static::style(?, static::CYAN);
                 $value = static::style((string) $description, style: static::DIM);
 
                 $this->write($key.$value);

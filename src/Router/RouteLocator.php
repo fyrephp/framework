@@ -227,7 +227,8 @@ class RouteLocator
                 $directoryPath = $directory->getPathname();
 
                 if ($directoryPath !== $folder) {
-                    $subNamespace = substr($directoryPath, $folderLength) |> str_replace(DIRECTORY_SEPARATOR, '\\', ?);
+                    $subNamespace = substr($directoryPath, $folderLength)
+                        |> str_replace(DIRECTORY_SEPARATOR, '\\', ?);
                     $fullNamespace .= ltrim($subNamespace, '\\').'\\';
                 }
 

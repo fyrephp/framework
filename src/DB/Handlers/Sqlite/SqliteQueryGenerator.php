@@ -55,7 +55,8 @@ class SqliteQueryGenerator extends QueryGenerator
 
         switch ($name) {
             case 'CONCAT':
-                return array_map($this->parseExpression(?, $binder), $arguments) |> implode(' || ', ?);
+                return array_map($this->parseExpression(?, $binder), $arguments)
+                    |> implode(' || ', ?);
             case 'DATE_ADD':
             case 'DATE_SUB':
                 [$expression, $value, $unit] = $arguments;
