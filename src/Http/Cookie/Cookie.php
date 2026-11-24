@@ -94,8 +94,7 @@ class Cookie implements Stringable
         $hasDomainAttribute = false;
         $defaultPath = (string) ($options['path'] ?? '/');
 
-        $nameValue = array_shift($parts);
-        $nameValue = explode('=', $nameValue, 2);
+        $nameValue = array_shift($parts) |> explode('=', ?, 2);
 
         $name = array_shift($nameValue) |> trim(...);
         $value = (array_shift($nameValue) ?? '') |> trim(...);
