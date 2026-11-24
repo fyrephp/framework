@@ -683,11 +683,7 @@ abstract class Arr
      */
     public static function only(array $array, array $keys): array
     {
-        return array_filter(
-            $array,
-            static fn(mixed $key): bool => in_array($key, $keys, true),
-            ARRAY_FILTER_USE_KEY
-        );
+        return array_filter($array, in_array(?, $keys, true), ARRAY_FILTER_USE_KEY);
     }
 
     /**

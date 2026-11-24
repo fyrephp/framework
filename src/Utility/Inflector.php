@@ -248,10 +248,7 @@ class Inflector
                 return $string;
             }
 
-            $keys = array_map(
-                static fn(string $w): string => preg_quote($w, '/'),
-                array_keys($this->irregular)
-            );
+            $keys = array_map(preg_quote(?, '/'), array_keys($this->irregular));
 
             if (preg_match('/('.implode('|', $keys).')\z/i', $string, $match)) {
                 $key = $match[1];
@@ -325,10 +322,7 @@ class Inflector
                 return $string;
             }
 
-            $values = array_map(
-                static fn(string $w): string => preg_quote($w, '/'),
-                $this->irregular
-            );
+            $values = array_map(preg_quote(?, '/'), $this->irregular);
 
             if (preg_match('/('.implode('|', $values).')\z/i', $string, $match)) {
                 $value = $match[1];

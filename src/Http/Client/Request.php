@@ -96,8 +96,8 @@ class Request extends HttpRequest
         $algo = strtolower($c['algorithm']);
         $hash = match ($algo) {
             'md5', 'md5-sess' => md5(...),
-            'sha-256', 'sha-256-sess' => static fn(string $data): string => hash('sha256', $data),
-            'sha-512-256', 'sha-512-256-sess' => static fn(string $data): string => hash('sha512/256', $data),
+            'sha-256', 'sha-256-sess' => hash('sha256', ?),
+            'sha-512-256', 'sha-512-256-sess' => hash('sha512/256', ?),
             default => throw new RequestException(sprintf(
                 'Algorithm `%s` is not supported',
                 $algo

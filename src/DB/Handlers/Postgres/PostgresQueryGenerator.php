@@ -36,10 +36,7 @@ class PostgresQueryGenerator extends QueryGenerator
             return parent::buildAggregate($aggregate, $binder);
         }
 
-        $arguments = array_map(
-            fn(mixed $argument): string => $this->parseExpression($argument, $binder),
-            $aggregate->getArguments()
-        );
+        $arguments = array_map($this->parseExpression(?, $binder), $aggregate->getArguments());
 
         $query = $aggregate->getName().'(';
 

@@ -164,9 +164,11 @@ class ServerRequestFactory implements ServerRequestFactoryInterface
                 continue;
             }
 
-            $header = substr($key, 5) |> strtolower(...);
-            $header = str_replace('_', ' ', $header) |> ucwords(...);
-            $header = str_replace(' ', '-', $header);
+            $header = substr($key, 5)
+                |> strtolower(...)
+                |> str_replace('_', ' ', ?)
+                |> ucwords(...)
+                |> str_replace(' ', '-', ?);
 
             $headers[$header] = $value;
         }

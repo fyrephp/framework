@@ -385,10 +385,7 @@ abstract class QueryGenerator
                 ->when($filter, $argument);
         }
 
-        $arguments = array_map(
-            fn(mixed $argument): string => $this->parseExpression($argument, $binder),
-            $arguments
-        );
+        $arguments = array_map($this->parseExpression(?, $binder), $arguments);
 
         $query = $aggregate->getName().'(';
 
@@ -487,10 +484,7 @@ abstract class QueryGenerator
                 ));
             }
 
-            $values = array_map(
-                fn(mixed $item): string => $this->parseExpression($item, $binder),
-                $value
-            );
+            $values = array_map($this->parseExpression(?, $binder), $value);
 
             return $field.' '.$operator.' ('.implode(', ', $values).')';
         }
@@ -616,7 +610,7 @@ abstract class QueryGenerator
                 }
 
                 $field = $this->connection->quoteIdentifier($field);
-                $value = array_map(fn(mixed $val): string => $this->parseExpression($val, $binder), $value);
+                $value = array_map($this->parseExpression(?, $binder), $value);
 
                 $groups[] = $field.' '.$comparison.' ('.implode(', ', $value).')';
 
@@ -806,10 +800,7 @@ abstract class QueryGenerator
                 return 'WEEKDAY('.$expression.')';
         }
 
-        $arguments = array_map(
-            fn(mixed $argument): string => $this->parseExpression($argument, $binder),
-            $arguments
-        );
+        $arguments = array_map($this->parseExpression(?, $binder), $arguments);
 
         return $name.'('.implode(', ', $arguments).')';
     }
