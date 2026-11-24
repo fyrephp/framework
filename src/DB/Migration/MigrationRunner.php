@@ -143,11 +143,10 @@ class MigrationRunner
      */
     public function getPendingMigrations(): array
     {
-        $ranMigrations = $this->getHistory()->all();
-        $ranMigrationNames = array_column($ranMigrations, 'migration')
-            |> array_flip(...);
-
-        return array_diff_key($this->getMigrations(), $ranMigrationNames);
+        return $this->getHistory()->all()
+            |> array_column(?, 'migration')
+            |> array_flip(...)
+            |> array_diff_key($this->getMigrations(), ?);
     }
 
     /**

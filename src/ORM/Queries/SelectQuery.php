@@ -821,8 +821,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 continue;
             }
 
-            $dataKeys = array_keys($data);
-            $invalidKeys = array_diff($dataKeys, static::VALID_CONTAIN_JOIN_OPTIONS);
+            $invalidKeys = array_keys($data) |> array_diff(?, static::VALID_CONTAIN_JOIN_OPTIONS);
 
             foreach ($invalidKeys as $invalidKey) {
                 throw new OrmException(sprintf(

@@ -295,7 +295,7 @@ class Promise implements PromiseInterface
             static fn(mixed $value): PromiseInterface => Promise::resolve($onFinally())
                 ->then(static fn(): mixed => $value),
             static fn(Throwable $reason): PromiseInterface => Promise::resolve($onFinally())
-                ->then(static fn(): RejectedPromise => static::reject($reason))
+                ->then(static::reject($reason, ...))
         );
     }
 
