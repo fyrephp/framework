@@ -2,6 +2,27 @@
 
 This file records user-visible changes to FyreFramework. Internal refactors, test-only changes, and other changes that do not affect users are omitted.
 
+## 2.0.0 - Unreleased
+
+### Added
+
+- Add `Identifier::identifyBy()` to find an identity by any of the supplied fields using the configured identity query callback.
+
+### Fixed
+
+- Require a non-empty stored password hash to issue or verify remember-me cookies. Custom identity queries must select the configured password field for remember-me authentication.
+- Apply `Auth.identifier.queryCallback` to session and bearer-token lookups so accounts excluded by the callback cannot authenticate with an existing session or token.
+- Prevent a login-time password rehash from overwriting a concurrent password reset.
+- Restrict the cURL client handler to absolute HTTP and HTTPS URLs with a host.
+- Send proxy credentials only to the proxy. Custom HTTP client handlers receive configured credentials in `$options['proxy']`.
+- Create new file-session directories with mode `0700` on Unix.
+- Retry a failed Redis job atomically so concurrent retries cannot enqueue the same failure twice.
+
+### Changed
+
+- Database and ORM queries now require `retrySafe: true` to retry execution after a disconnect. Outside a transaction, recognized disconnects during statement preparation still trigger one automatic retry.
+- Memcached `clear()` now throws `CacheException` unless the prefix is empty and `flushServer` is `true`. Enabling this option permits a server-wide flush, including other applications’ entries and locks.
+
 ## 1.2.0 - 2026-10-07
 
 ### Added
