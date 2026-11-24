@@ -184,7 +184,7 @@ These methods return new collections. Except where the materialization table say
 | `values(): static` | yield source values as a reindexed sequence |
 | `flip(): static` | use each value as a key and its original key as the value |
 
-Available sort flags are `SORT_LOCALE`, `SORT_NATURAL`, `SORT_NUMERIC`, `SORT_REGULAR`, and `SORT_STRING`. For `sort()`, `$descending` applies only when using a sort flag; a comparison closure controls its own direction. `unique()` compares loosely by default; pass `true` for strict comparison.
+Available sort flags are `SORT_NATURAL`, `SORT_NUMERIC`, `SORT_REGULAR`, and `SORT_STRING`. For `sort()`, `$descending` applies only when using a sort flag. A comparison closure controls its own direction. To sort strings using Swedish collation rules, use `$names->sort((new Collator('sv_SE'))->compare(...))`. `unique()` compares loosely by default. Pass `true` for strict comparison.
 
 ### Aggregates
 

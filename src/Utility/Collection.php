@@ -68,8 +68,6 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
     use MacroTrait;
     use StaticMacroTrait;
 
-    public const SORT_LOCALE = Arr::SORT_LOCALE;
-
     public const SORT_NATURAL = SORT_NATURAL;
 
     public const SORT_NUMERIC = SORT_NUMERIC;

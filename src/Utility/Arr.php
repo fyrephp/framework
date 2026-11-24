@@ -75,9 +75,6 @@ abstract class Arr
 
     public const FILTER_VALUE = 0;
 
-    /** Native LC_COLLATE sort flag. PHP 8.6 deprecates the constant name. */
-    public const SORT_LOCALE = 5;
-
     public const SORT_NATURAL = SORT_NATURAL;
 
     public const SORT_NUMERIC = SORT_NUMERIC;

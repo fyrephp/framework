@@ -46,7 +46,7 @@ Most methods return a new array. Only `pop()`, `push()`, `shift()`, `unshift()`,
 | --- | --- | --- |
 | counting | `COUNT_NORMAL`, `COUNT_RECURSIVE` | `count()` |
 | filtering | `FILTER_BOTH`, `FILTER_KEY`, `FILTER_VALUE` | `filter()` |
-| sorting/comparison | `SORT_LOCALE`, `SORT_NATURAL`, `SORT_NUMERIC`, `SORT_REGULAR`, `SORT_STRING` | `sort()` and `unique()` |
+| sorting/comparison | `SORT_NATURAL`, `SORT_NUMERIC`, `SORT_REGULAR`, `SORT_STRING` | `sort()` and `unique()` |
 
 The values mirror the corresponding PHP constants.
 
@@ -154,6 +154,8 @@ Callbacks in this group receive `(value, key)`.
 | `unique(array $array, int $flags = Arr::SORT_REGULAR): array` | remove duplicate values while retaining the first occurrence's key |
 | `diff(array $array, array ...$arrays): array` | preserve values absent from every comparison array |
 | `intersect(array $array, array ...$arrays): array` | preserve values present in every comparison array |
+
+To sort strings using Swedish collation rules, use `Arr::sort($names, (new Collator('sv_SE'))->compare(...))`.
 
 With no callback, `filter()` removes falsey values using native `array_filter()` behavior. With a callback, its default mode is `FILTER_BOTH`, so the callback receives both value and key. Use `FILTER_VALUE` or `FILTER_KEY` to receive only one argument.
 

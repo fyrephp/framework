@@ -23,6 +23,10 @@ This file records user-visible changes to FyreFramework. Internal refactors, tes
 - Database and ORM queries now require `retrySafe: true` to retry execution after a disconnect. Outside a transaction, recognized disconnects during statement preparation still trigger one automatic retry.
 - Memcached `clear()` now throws `CacheException` unless the prefix is empty and `flushServer` is `true`. Enabling this option permits a server-wide flush, including other applications’ entries and locks.
 
+### Removed
+
+- Remove `Arr::SORT_LOCALE` and `Collection::SORT_LOCALE`. For locale-aware string sorting, pass a `Collator` comparison callback to `Arr::sort()` or `Collection::sort()`.
+
 ## 1.2.0 - 2026-10-07
 
 ### Added
