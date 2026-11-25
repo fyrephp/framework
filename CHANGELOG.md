@@ -2,7 +2,7 @@
 
 This file records user-visible changes to FyreFramework. Internal refactors, test-only changes, and other changes that do not affect users are omitted.
 
-## 2.0.0 - Unreleased
+## 2.0.0 - 2026-11-25
 
 ### Added
 
